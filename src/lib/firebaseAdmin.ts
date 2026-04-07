@@ -1,5 +1,5 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { Firestore, getFirestore } from "firebase-admin/firestore";
 
 function normalizePrivateKey(value?: string): string | undefined {
   if (!value) return undefined;
@@ -30,31 +30,39 @@ function parseServiceAccountFromEnv(): ServiceAccountLike | null {
   }
 }
 
-const fromJson = parseServiceAccountFromEnv();
-const projectId = process.env.FIREBASE_PROJECT_ID ?? fromJson?.project_id;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL ?? fromJson?.client_email;
-const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY ?? fromJson?.private_key);
+function getServiceAccount() {
+  const fromJson = parseServiceAccountFromEnv();
+  const projectId = process.env.FIREBASE_PROJECT_ID ?? fromJson?.project_id;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL ?? fromJson?.client_email;
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY ?? fromJson?.private_key);
 
-const hasServiceAccount = Boolean(projectId && clientEmail && privateKey);
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error(
+      "Firebase Admin credentials are missing or malformed. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY in Vercel.",
+    );
+  }
 
-if (!hasServiceAccount && process.env.NODE_ENV === "production") {
-  throw new Error(
-    "Firebase Admin credentials are missing or malformed. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY in Vercel.",
-  );
+  return { projectId, clientEmail, privateKey };
 }
 
-const app =
-  getApps()[0] ??
-  initializeApp(
-    hasServiceAccount
-      ? {
-          credential: cert({
-            projectId,
-            clientEmail,
-            privateKey,
-          }),
-        }
-      : {},
-  );
+let firestoreInstance: Firestore | null = null;
 
-export const db = getFirestore(app); 
+export function getDb(): Firestore {
+  if (firestoreInstance) {
+    return firestoreInstance;
+  }
+
+  const { projectId, clientEmail, privateKey } = getServiceAccount();
+  const app =
+    getApps()[0] ??
+    initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+    });
+
+  firestoreInstance = getFirestore(app);
+  return firestoreInstance;
+}

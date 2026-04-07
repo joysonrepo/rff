@@ -1,4 +1,4 @@
-import { db } from "@/lib/firebaseAdmin";
+import { getDb } from "@/lib/firebaseAdmin";
 import {
   Attendance,
   Batch,
@@ -50,6 +50,7 @@ function applyTake<T>(items: T[], take?: number): T[] {
 }
 
 async function getNextId(collectionName: string): Promise<number> {
+  const db = getDb();
   const counterRef = db.collection("meta").doc("counters");
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(counterRef);
@@ -61,11 +62,13 @@ async function getNextId(collectionName: string): Promise<number> {
 }
 
 async function listCollection<T>(collectionName: string): Promise<T[]> {
+  const db = getDb();
   const snap = await db.collection(collectionName).get();
   return snap.docs.map((doc) => doc.data() as T);
 }
 
 async function createWithId<T extends { id: number }>(collectionName: string, data: Omit<T, "id">): Promise<T> {
+  const db = getDb();
   const id = await getNextId(collectionName);
   const payload = { ...(data as object), id } as T;
   await db.collection(collectionName).doc(String(id)).set(payload as object);
@@ -73,6 +76,7 @@ async function createWithId<T extends { id: number }>(collectionName: string, da
 }
 
 async function findUniqueByField<T>(collectionName: string, where: WhereClause): Promise<T | null> {
+  const db = getDb();
   const [field, value] = Object.entries(where)[0];
   const snap = await db.collection(collectionName).where(field, "==", value).limit(1).get();
   if (snap.empty) return null;
@@ -80,6 +84,7 @@ async function findUniqueByField<T>(collectionName: string, where: WhereClause):
 }
 
 async function updateById<T>(collectionName: string, id: number, data: Partial<T>): Promise<T> {
+  const db = getDb();
   const ref = db.collection(collectionName).doc(String(id));
   await ref.set(data as object, { merge: true });
   const snap = await ref.get();
@@ -87,6 +92,7 @@ async function updateById<T>(collectionName: string, id: number, data: Partial<T
 }
 
 async function deleteById(collectionName: string, id: number): Promise<void> {
+  const db = getDb();
   await db.collection(collectionName).doc(String(id)).delete();
 }
 
