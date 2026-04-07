@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  FOUNDER
+  BOARD_DIRECTOR
+  ADMIN_MANAGER
+  HR
+  ACCOUNTS
+  PRINCIPAL
+  TEACHER
+  PARENT
+  STUDENT
+}
+
+enum CourseType {
+  MONTESSORI
+  MUSIC
+  TUITION
+}
+
+enum EnrollmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AttendanceTargetType {
+  STUDENT
+  STAFF
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum FeeStatus {
+  PENDING
+  PARTIAL
+  PAID
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  student       Student?
+  parent        Parent?
+  teacher       Teacher?
+  staff         Staff?
+  notifications Notification[]
+  attendanceLog Attendance[]   @relation("AttendanceUser")
+  markedLogs    Attendance[]   @relation("AttendanceMarker")
+}
+
+model Parent {
+  id         Int       @id @default(autoincrement())
+  name       String
+  contact    String
+  userId     Int?      @unique
+  user       User?     @relation(fields: [userId], references: [id])
+  students   Student[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Student {
+  id            Int          @id @default(autoincrement())
+  name          String
+  age           Int
+  userId        Int?         @unique
+  user          User?        @relation(fields: [userId], references: [id])
+  parentId      Int?
+  parent        Parent?      @relation(fields: [parentId], references: [id])
+  course        CourseType
+  batchId       Int?
+  batch         Batch?       @relation(fields: [batchId], references: [id])
+  attendance    Attendance[]
+  marks         Mark[]
+  fees          Fee[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Teacher {
+  id         Int       @id @default(autoincrement())
+  name       String
+  subject    String
+  userId     Int?      @unique
+  user       User?     @relation(fields: [userId], references: [id])
+  batches    Batch[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Staff {
+  id         Int       @id @default(autoincrement())
+  name       String
+  role       String
+  userId     Int?      @unique
+  user       User?     @relation(fields: [userId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Attendance {
+  id            Int                  @id @default(autoincrement())
+  userId        Int
+  user          User                 @relation("AttendanceUser", fields: [userId], references: [id])
+  studentId     Int?
+  student       Student?             @relation(fields: [studentId], references: [id])
+  date          DateTime
+  status        AttendanceStatus
+  targetType    AttendanceTargetType
+  markedById    Int?
+  markedBy      User?                @relation("AttendanceMarker", fields: [markedById], references: [id])
+  notes         String?
+  createdAt     DateTime             @default(now())
+
+  @@index([date, targetType])
+}
+
+model Mark {
+  id         Int       @id @default(autoincrement())
+  studentId  Int
+  student    Student   @relation(fields: [studentId], references: [id])
+  subject    String
+  marks      Int
+  examType   String?
+  createdAt  DateTime  @default(now())
+}
+
+model Fee {
+  id           Int       @id @default(autoincrement())
+  studentId    Int
+  student      Student   @relation(fields: [studentId], references: [id])
+  amount       Float
+  status       FeeStatus
+  paidOn       DateTime?
+  receiptNo    String?
+  createdAt    DateTime  @default(now())
+}
+
+model Course {
+  id         Int        @id @default(autoincrement())
+  name       String
+  type       CourseType
+  batches    Batch[]
+  createdAt  DateTime   @default(now())
+}
+
+model Batch {
+  id         Int       @id @default(autoincrement())
+  name       String
+  courseId   Int
+  course     Course    @relation(fields: [courseId], references: [id])
+  teacherId  Int?
+  teacher    Teacher?  @relation(fields: [teacherId], references: [id])
+  timing     String
+  students   Student[]
+  createdAt  DateTime  @default(now())
+}
+
+model Enrollment {
+  id          Int              @id @default(autoincrement())
+  name        String
+  parentName  String?
+  email       String
+  age         Int
+  course      CourseType
+  status      EnrollmentStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  reviewedBy  Int?
+}
+
+model Event {
+  id           Int       @id @default(autoincrement())
+  name         String
+  date         DateTime
+  description  String
+  registrations Int      @default(0)
+  createdAt    DateTime  @default(now())
+}
+
+model Notification {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id])
+  title      String
+  message    String
+  isRead     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+}

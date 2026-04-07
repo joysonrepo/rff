@@ -6,12 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "node scripts/seed-firebase.mjs"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.1",
+    "firebase-admin": "^13.7.0",
+    "jose": "^6.2.2",
     "next": "16.2.2",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",

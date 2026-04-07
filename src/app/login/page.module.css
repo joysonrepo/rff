@@ -1,0 +1,38 @@
+.wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.card {
+  width: min(430px, 95vw);
+  background: #fff;
+  border: 1px solid #eadfce;
+  border-radius: 16px;
+  padding: 1.4rem;
+  box-shadow: 0 14px 40px rgba(31, 42, 68, 0.1);
+  display: grid;
+  gap: 0.8rem;
+}
+
+.input,
+.button {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #d7dce5;
+  padding: 0.65rem;
+  font: inherit;
+}
+
+.button {
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(90deg, #1f2a44, #2d4a7a);
+  cursor: pointer;
+}
+
+.error {
+  color: #b33636;
+}
