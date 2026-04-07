@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addStudent } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -24,7 +24,6 @@ export default async function StudentsPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Students</h1>
       {(session.role === "FOUNDER" || session.role === "ADMIN_MANAGER") && (
         <section className={styles.section}>
           <h2>Add Student</h2>

@@ -6,6 +6,8 @@ import { logoutUser } from "@/lib/auth";
 import styles from "./AppShell.module.css";
 import { AppModule } from "@/lib/permissions";
 import { Role } from "@/lib/types";
+import { AppShellClient } from "@/components/AppShellClient";
+import { PageHeaderTitle } from "@/components/PageHeaderTitle";
 
 type AppShellProps = {
   role: Role;
@@ -52,27 +54,31 @@ export function AppShell({ role, name, children }: AppShellProps) {
     redirect("/login");
   }
 
+  const sidebarContent = (
+    <>
+      <div className={styles.brand}>ROL&apos;s Fun Factory</div>
+      <div className={styles.role}>{name} ({role})</div>
+      <nav className={styles.menu}>
+        {allowedModules.map((moduleName) => (
+          <Link key={moduleName} href={routeMap[moduleName]}>
+            {labelMap[moduleName]}
+          </Link>
+        ))}
+      </nav>
+    </>
+  );
+
   return (
-    <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}>ROL&apos;s Fun Factory</div>
-        <div className={styles.role}>{name} ({role})</div>
-        <nav className={styles.menu}>
-          {allowedModules.map((moduleName) => (
-            <Link key={moduleName} href={routeMap[moduleName]}>
-              {labelMap[moduleName]}
-            </Link>
-          ))}
-        </nav>
-      </aside>
+    <AppShellClient sidebarContent={sidebarContent}>
       <section className={styles.main}>
         <header className={styles.top}>
+          <PageHeaderTitle />
           <form action={doLogout}>
             <button type="submit">Logout</button>
           </form>
         </header>
         <main className={styles.content}>{children}</main>
       </section>
-    </div>
+    </AppShellClient>
   );
 }

@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addAttendance } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -26,7 +26,6 @@ export default async function AttendancePage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Attendance</h1>
       {(session.role === "FOUNDER" || session.role === "TEACHER" || session.role === "HR" || session.role === "ADMIN_MANAGER") && (
         <section className={styles.section}>
           <h2>Mark Attendance</h2>

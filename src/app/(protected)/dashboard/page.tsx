@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import { canAccess } from "@/lib/permissions";
 import { requireSession } from "@/lib/auth";
 import styles from "../module.module.css";
@@ -55,7 +55,6 @@ export default async function DashboardPage() {
   return (
     <div className={styles.wrap}>
       <div>
-        <h1 className={styles.title}>{session.role} Dashboard</h1>
         <p className={styles.subtitle}>{roleMessages[session.role]}</p>
       </div>
 

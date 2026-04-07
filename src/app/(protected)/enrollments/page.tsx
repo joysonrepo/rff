@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { reviewEnrollment } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -15,7 +15,6 @@ export default async function EnrollmentsPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Enrollment Workflow</h1>
       <table className={styles.table}>
         <thead>
           <tr>

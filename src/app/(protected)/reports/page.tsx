@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { RevenueChart } from "@/components/reports/RevenueChart";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -33,7 +33,6 @@ export default async function ReportsPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Reports & Analytics</h1>
       <section className={styles.grid}>
         <article className={styles.card}>
           <div className={styles.metric}>{students}</div>

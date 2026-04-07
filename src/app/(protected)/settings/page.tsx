@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addUser, deleteUser } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -15,7 +15,6 @@ export default async function SettingsPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>System Settings</h1>
       {session.role !== "FOUNDER" ? (
         <p className={styles.subtitle}>Only founder has full system controls.</p>
       ) : (

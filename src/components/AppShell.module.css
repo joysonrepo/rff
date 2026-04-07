@@ -1,15 +1,49 @@
 .shell {
   min-height: 100vh;
+  width: 100%;
   display: grid;
   grid-template-columns: 270px 1fr;
   background: radial-gradient(circle at 15% 20%, #ffe7c2 0%, #fff9f0 34%, #f8fbff 100%);
+  position: relative;
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.75rem;
+  z-index: 101;
+}
+
+.hamburger span {
+  width: 24px;
+  height: 3px;
+  background: #1f2a44;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
 }
 
 .sidebar {
+  min-width: 0;
   padding: 1.5rem;
   border-right: 1px solid #e7e2d9;
   background: linear-gradient(180deg, #1f2a44 0%, #25355a 100%);
   color: #f7f1e8;
+}
+
+.sidebarOpen {
+  position: static;
 }
 
 .brand {
@@ -22,6 +56,7 @@
   color: #f5c887;
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 .menu {
@@ -45,10 +80,18 @@
 
 .top {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
   border-bottom: 1px solid #ece7dd;
   background: #fff;
   padding: 1rem;
+}
+
+.pageTitle {
+  font-size: 1.55rem;
+  color: #1f2a44;
+  line-height: 1.2;
 }
 
 .top button {
@@ -62,11 +105,13 @@
 }
 
 .main {
+  min-width: 0;
   display: grid;
   grid-template-rows: auto 1fr;
 }
 
 .content {
+  min-width: 0;
   padding: 1.4rem;
 }
 
@@ -78,5 +123,105 @@
   .sidebar {
     border-right: none;
     border-bottom: 1px solid #e7e2d9;
+    padding: 1rem;
+  }
+
+  .top {
+    padding: 0.85rem 1rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    grid-template-columns: 1fr;
+    display: block;
+  }
+
+  .hamburger {
+    display: flex;
+    position: fixed;
+    top: 0.45rem;
+    left: 0.55rem;
+    padding: 0.45rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(20, 30, 50, 0.15);
+  }
+
+  .overlay {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    border-right: 1px solid #e7e2d9;
+    overflow-y: auto;
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .brand {
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+
+  .role {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .menu a {
+    padding: 0.7rem 0.8rem;
+    font-size: 0.95rem;
+    border-radius: 8px;
+  }
+
+  .top {
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem 0.5rem 3.4rem;
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+  }
+
+  .pageTitle {
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .top form,
+  .top button {
+    width: auto;
+  }
+
+  .top button {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.92rem;
+  }
+
+  .content {
+    padding-top: 0.8rem;
   }
 }

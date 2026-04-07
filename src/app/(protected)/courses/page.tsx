@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addCourseBatch } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -15,7 +15,6 @@ export default async function CoursesPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Course & Batch Management</h1>
       <section className={styles.section}>
         <h2>Add Course + Batch</h2>
         <form className={styles.formGrid} action={addCourseBatch}>

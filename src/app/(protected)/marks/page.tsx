@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addMark } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -29,7 +29,6 @@ export default async function MarksPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Marks & Performance</h1>
       {(session.role === "FOUNDER" || session.role === "TEACHER" || session.role === "PRINCIPAL") && (
         <section className={styles.section}>
           <h2>Upload Marks</h2>

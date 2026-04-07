@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addStaff } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -15,7 +15,6 @@ export default async function StaffPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Staff & HR Management</h1>
       {(session.role === "FOUNDER" || session.role === "HR") && (
         <section className={styles.section}>
           <h2>Add Employee</h2>

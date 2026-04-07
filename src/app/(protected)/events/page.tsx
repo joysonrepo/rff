@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addEvent } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -15,7 +15,6 @@ export default async function EventsPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Events & Camps</h1>
       {(session.role === "FOUNDER" || session.role === "ADMIN_MANAGER" || session.role === "PRINCIPAL") && (
         <section className={styles.section}>
           <h2>Add Event</h2>

@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { addFee } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -25,7 +25,6 @@ export default async function FeesPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Fees Management</h1>
       {(session.role === "FOUNDER" || session.role === "ACCOUNTS") && (
         <section className={styles.section}>
           <h2>Record Payment</h2>

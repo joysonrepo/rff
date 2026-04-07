@@ -1,4 +1,4 @@
-import { AccessDenied } from "@/components/AccessDenied";
+﻿import { AccessDenied } from "@/components/AccessDenied";
 import { sendNotification } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -19,7 +19,6 @@ export default async function NotificationsPage() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.title}>Notifications</h1>
       {(session.role === "FOUNDER" || session.role === "ADMIN_MANAGER" || session.role === "TEACHER") && (
         <section className={styles.section}>
           <h2>Send Announcement</h2>
