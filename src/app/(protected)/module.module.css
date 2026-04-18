@@ -38,15 +38,33 @@
 }
 
 .table {
-  width: 100%;
-  display: block;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  display: table;
   border-collapse: collapse;
   background: #fff;
   border: 1px solid #efe8de;
   border-radius: 14px;
   white-space: nowrap;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+}
+
+.responsiveTable {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .responsiveTable {
+    min-width: 860px;
+  }
 }
 
 .table th,
@@ -81,11 +99,122 @@
   cursor: pointer;
 }
 
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.iconAction,
+.iconActionDanger {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #ced8e8;
+  background: #f7f9fd;
+  color: #1f2a44;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.iconActionDanger {
+  border-color: #efc2c8;
+  background: #fff5f6;
+  color: #9d1f2d;
+}
+
+.cellHideMobile {
+  display: table-cell;
+}
+
+.actionButtonText {
+  display: inline;
+}
+
+.actionButtonIcon {
+  display: none;
+}
+
 .section {
   background: #fff;
   border: 1px solid #efe8de;
   border-radius: 14px;
   padding: 1rem;
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(820px, 94vw);
+  max-height: 88vh;
+  overflow: auto;
+  border: 1px solid #dfe6f1;
+  border-radius: 14px;
+  padding: 1rem;
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(16, 33, 58, 0.25);
+  z-index: 120;
+}
+
+.dialog::backdrop {
+  background: rgba(20, 27, 38, 0.56);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.dialogTitle {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iconClose {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: #f7faff;
+  color: #1f2a44;
+  font-size: 1.1rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profileWrap {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.profileImage {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  border: 1px solid #e7ecf5;
+  object-fit: cover;
+  background: #f2f5fa;
+}
+
+.profileGrid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.profileGrid div {
+  white-space: normal;
 }
 
 @media (max-width: 640px) {
@@ -122,5 +251,42 @@
   .table td {
     padding: 0.6rem;
     font-size: 0.92rem;
+  }
+
+  .cellHideMobile {
+    display: none;
+  }
+
+  .actionRow {
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+  }
+
+  .actionButtonText {
+    display: none;
+  }
+
+  .actionButtonIcon {
+    display: inline;
+  }
+
+  .button {
+    padding: 0.45rem 0.55rem;
+    min-width: 0;
+  }
+
+  .iconAction,
+  .iconActionDanger {
+    width: 28px;
+    height: 28px;
+  }
+
+  .profileWrap {
+    grid-template-columns: 1fr;
+  }
+
+  .profileImage {
+    width: 120px;
+    height: 120px;
   }
 }

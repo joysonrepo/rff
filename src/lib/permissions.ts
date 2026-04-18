@@ -3,7 +3,9 @@ import { Role } from "@/lib/types";
 export type AppModule =
   | "dashboard"
   | "students"
+  | "studentList"
   | "staff"
+  | "staffList"
   | "attendance"
   | "fees"
   | "reports"
@@ -17,7 +19,9 @@ export type AppModule =
 const allModules: AppModule[] = [
   "dashboard",
   "students",
+  "studentList",
   "staff",
+  "staffList",
   "attendance",
   "fees",
   "reports",
@@ -32,12 +36,12 @@ const allModules: AppModule[] = [
 const permissionMap: Record<Role, AppModule[]> = {
   FOUNDER: allModules,
   BOARD_DIRECTOR: ["dashboard", "reports"],
-  ADMIN_MANAGER: ["dashboard", "students", "attendance", "events", "enrollments", "courses", "notifications"],
-  HR: ["dashboard", "staff", "attendance", "reports"],
-  ACCOUNTS: ["dashboard", "fees", "reports", "staff"],
-  PRINCIPAL: ["dashboard", "students", "attendance", "marks", "reports", "events"],
-  TEACHER: ["dashboard", "students", "attendance", "marks", "events", "notifications"],
-  PARENT: ["dashboard", "students", "attendance", "marks", "fees", "events", "notifications"],
+  ADMIN_MANAGER: ["dashboard", "students", "studentList", "attendance", "events", "enrollments", "courses", "notifications"],
+  HR: ["dashboard", "staff", "staffList", "attendance", "reports"],
+  ACCOUNTS: ["dashboard", "fees", "reports", "staff", "staffList"],
+  PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "marks", "reports", "events"],
+  TEACHER: ["dashboard", "students", "studentList", "attendance", "marks", "events", "notifications"],
+  PARENT: ["dashboard", "students", "studentList", "attendance", "marks", "fees", "events", "notifications"],
   STUDENT: ["dashboard", "attendance", "marks", "events", "notifications"],
 };
 

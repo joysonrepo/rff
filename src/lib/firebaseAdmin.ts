@@ -45,6 +45,14 @@ function getServiceAccount() {
   return { projectId, clientEmail, privateKey };
 }
 
+export function hasFirebaseAdminConfig(): boolean {
+  const fromJson = parseServiceAccountFromEnv();
+  const projectId = process.env.FIREBASE_PROJECT_ID ?? fromJson?.project_id;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL ?? fromJson?.client_email;
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY ?? fromJson?.private_key);
+  return Boolean(projectId && clientEmail && privateKey);
+}
+
 let firestoreInstance: Firestore | null = null;
 
 export function getDb(): Firestore {

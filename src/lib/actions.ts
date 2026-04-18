@@ -13,12 +13,52 @@ function ensureAccess(moduleName: Parameters<typeof canAccess>[1], role: Role): 
   }
 }
 
+function getOptionalString(formData: FormData, key: string): string | null {
+  const value = String(formData.get(key) ?? "").trim();
+  return value ? value : null;
+}
+
+async function getOptionalImageDataUrl(formData: FormData, key: string): Promise<string | null> {
+  const value = formData.get(key);
+  if (!(value instanceof File) || value.size === 0) {
+    return null;
+  }
+
+  if (!value.type.startsWith("image/")) {
+    throw new Error("Profile image must be a valid image file.");
+  }
+
+  const maxSize = 2 * 1024 * 1024;
+  if (value.size > maxSize) {
+    throw new Error("Profile image must be 2MB or smaller.");
+  }
+
+  const bytes = Buffer.from(await value.arrayBuffer());
+  return `data:${value.type};base64,${bytes.toString("base64")}`;
+}
+
 export async function addStudent(formData: FormData) {
   const session = await requireSession();
   ensureAccess("students", session.role);
 
   const name = String(formData.get("name") ?? "").trim();
+  const className = getOptionalString(formData, "className");
+  const howDidYouHear = getOptionalString(formData, "howDidYouHear");
+  const enquiryStatus = getOptionalString(formData, "enquiryStatus");
+  const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
   const age = Number(formData.get("age") ?? 0);
+  const city = getOptionalString(formData, "city");
+  const state = getOptionalString(formData, "state");
+  const residentialAddress = getOptionalString(formData, "residentialAddress");
+  const permanentAddress = getOptionalString(formData, "permanentAddress");
+  const fatherName = getOptionalString(formData, "fatherName");
+  const fatherEmail = getOptionalString(formData, "fatherEmail");
+  const fatherMobile = getOptionalString(formData, "fatherMobile");
+  const motherName = getOptionalString(formData, "motherName");
+  const motherEmail = getOptionalString(formData, "motherEmail");
+  const motherMobile = getOptionalString(formData, "motherMobile");
+  const feeOfferedRaw = getOptionalString(formData, "feeOffered");
+  const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
   const course = String(formData.get("course") ?? "MONTESSORI") as CourseType;
 
   if (!name || !age) {
@@ -26,10 +66,32 @@ export async function addStudent(formData: FormData) {
   }
 
   await prisma.student.create({
-    data: { name, age, course },
+    data: {
+      name,
+      status: "ACTIVE",
+      profileImage,
+      className,
+      howDidYouHear,
+      enquiryStatus,
+      dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
+      age,
+      city,
+      state,
+      residentialAddress,
+      permanentAddress,
+      fatherName,
+      fatherEmail,
+      fatherMobile,
+      motherName,
+      motherEmail,
+      motherMobile,
+      feeOffered: feeOfferedRaw ? Number(feeOfferedRaw) : null,
+      course,
+    },
   });
 
   revalidatePath("/students");
+  revalidatePath("/student-list");
   revalidatePath("/dashboard");
 }
 
@@ -38,14 +100,43 @@ export async function addStaff(formData: FormData) {
   ensureAccess("staff", session.role);
 
   const name = String(formData.get("name") ?? "").trim();
+  const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
   const role = String(formData.get("role") ?? "").trim();
+  const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
+  const email = getOptionalString(formData, "email");
+  const contactNumber = getOptionalString(formData, "contactNumber");
+  const emergencyContact = getOptionalString(formData, "emergencyContact");
+  const address = getOptionalString(formData, "address");
+  const city = getOptionalString(formData, "city");
+  const state = getOptionalString(formData, "state");
+  const qualification = getOptionalString(formData, "qualification");
+  const experienceYearsRaw = getOptionalString(formData, "experienceYears");
+  const joiningDateRaw = getOptionalString(formData, "joiningDate");
 
   if (!name || !role) {
     throw new Error("Name and staff role are required.");
   }
 
-  await prisma.staff.create({ data: { name, role } });
+  await prisma.staff.create({
+    data: {
+      name,
+      status: "ACTIVE",
+      profileImage,
+      role,
+      dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
+      email,
+      contactNumber,
+      emergencyContact,
+      address,
+      city,
+      state,
+      qualification,
+      experienceYears: experienceYearsRaw ? Number(experienceYearsRaw) : null,
+      joiningDate: joiningDateRaw ? new Date(joiningDateRaw) : null,
+    },
+  });
   revalidatePath("/staff");
+  revalidatePath("/staff-list");
 }
 
 export async function addAttendance(formData: FormData) {
@@ -132,8 +223,23 @@ export async function addEvent(formData: FormData) {
 
 export async function addEnrollment(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
-  const parentName = String(formData.get("parentName") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const className = getOptionalString(formData, "className");
+  const howDidYouHear = getOptionalString(formData, "howDidYouHear");
+  const enquiryStatus = getOptionalString(formData, "enquiryStatus");
+  const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
+  const city = getOptionalString(formData, "city");
+  const state = getOptionalString(formData, "state");
+  const residentialAddress = getOptionalString(formData, "residentialAddress");
+  const permanentAddress = getOptionalString(formData, "permanentAddress");
+  const fatherName = getOptionalString(formData, "fatherName");
+  const fatherEmail = getOptionalString(formData, "fatherEmail");
+  const fatherMobile = getOptionalString(formData, "fatherMobile");
+  const motherName = getOptionalString(formData, "motherName");
+  const motherEmail = getOptionalString(formData, "motherEmail");
+  const motherMobile = getOptionalString(formData, "motherMobile");
+  const feeOfferedRaw = getOptionalString(formData, "feeOffered");
+  const parentName = fatherName;
+  const email = fatherEmail ?? motherEmail ?? "";
   const age = Number(formData.get("age") ?? 0);
   const course = String(formData.get("course") ?? "MONTESSORI") as CourseType;
 
@@ -142,7 +248,28 @@ export async function addEnrollment(formData: FormData) {
   }
 
   await prisma.enrollment.create({
-    data: { name, parentName, email, age, course },
+    data: {
+      name,
+      className,
+      howDidYouHear,
+      enquiryStatus,
+      dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
+      parentName,
+      email,
+      age,
+      city,
+      state,
+      residentialAddress,
+      permanentAddress,
+      fatherName,
+      fatherEmail,
+      fatherMobile,
+      motherName,
+      motherEmail,
+      motherMobile,
+      feeOffered: feeOfferedRaw ? Number(feeOfferedRaw) : null,
+      course,
+    },
   });
 
   revalidatePath("/");
@@ -167,7 +294,23 @@ export async function reviewEnrollment(formData: FormData) {
       await prisma.student.create({
         data: {
           name: enrollment.name,
+          status: "ACTIVE",
+          className: enrollment.className,
+          howDidYouHear: enrollment.howDidYouHear,
+          enquiryStatus: enrollment.enquiryStatus,
+          dateOfBirth: enrollment.dateOfBirth,
           age: enrollment.age,
+          city: enrollment.city,
+          state: enrollment.state,
+          residentialAddress: enrollment.residentialAddress,
+          permanentAddress: enrollment.permanentAddress,
+          fatherName: enrollment.fatherName,
+          fatherEmail: enrollment.fatherEmail,
+          fatherMobile: enrollment.fatherMobile,
+          motherName: enrollment.motherName,
+          motherEmail: enrollment.motherEmail,
+          motherMobile: enrollment.motherMobile,
+          feeOffered: enrollment.feeOffered,
           course: enrollment.course,
         },
       });
@@ -176,6 +319,149 @@ export async function reviewEnrollment(formData: FormData) {
 
   revalidatePath("/enrollments");
   revalidatePath("/students");
+  revalidatePath("/student-list");
+}
+
+export async function deactivateStudent(formData: FormData) {
+  const session = await requireSession();
+  ensureAccess("students", session.role);
+
+  const studentId = Number(formData.get("studentId") ?? 0);
+  if (!studentId) {
+    throw new Error("Student id is required.");
+  }
+
+  await prisma.student.update({ where: { id: studentId }, data: { status: "INACTIVE" } });
+
+  revalidatePath("/students");
+  revalidatePath("/student-list");
+  revalidatePath("/dashboard");
+}
+
+export async function deactivateStaff(formData: FormData) {
+  const session = await requireSession();
+  ensureAccess("staff", session.role);
+
+  const staffId = Number(formData.get("staffId") ?? 0);
+  if (!staffId) {
+    throw new Error("Staff id is required.");
+  }
+
+  await prisma.staff.update({ where: { id: staffId }, data: { status: "INACTIVE" } });
+
+  revalidatePath("/staff");
+  revalidatePath("/staff-list");
+  revalidatePath("/dashboard");
+}
+
+export async function updateStudent(formData: FormData) {
+  const session = await requireSession();
+  ensureAccess("students", session.role);
+
+  const studentId = Number(formData.get("studentId") ?? 0);
+  const name = String(formData.get("name") ?? "").trim();
+  const className = getOptionalString(formData, "className");
+  const howDidYouHear = getOptionalString(formData, "howDidYouHear");
+  const enquiryStatus = getOptionalString(formData, "enquiryStatus");
+  const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
+  const age = Number(formData.get("age") ?? 0);
+  const city = getOptionalString(formData, "city");
+  const state = getOptionalString(formData, "state");
+  const residentialAddress = getOptionalString(formData, "residentialAddress");
+  const permanentAddress = getOptionalString(formData, "permanentAddress");
+  const fatherName = getOptionalString(formData, "fatherName");
+  const fatherEmail = getOptionalString(formData, "fatherEmail");
+  const fatherMobile = getOptionalString(formData, "fatherMobile");
+  const motherName = getOptionalString(formData, "motherName");
+  const motherEmail = getOptionalString(formData, "motherEmail");
+  const motherMobile = getOptionalString(formData, "motherMobile");
+  const feeOfferedRaw = getOptionalString(formData, "feeOffered");
+  const course = String(formData.get("course") ?? "MONTESSORI") as CourseType;
+  const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
+
+  if (!studentId || !name || !age) {
+    throw new Error("Student id, name, and age are required.");
+  }
+
+  const data: any = {
+    name,
+    className,
+    howDidYouHear,
+    enquiryStatus,
+    dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
+    age,
+    city,
+    state,
+    residentialAddress,
+    permanentAddress,
+    fatherName,
+    fatherEmail,
+    fatherMobile,
+    motherName,
+    motherEmail,
+    motherMobile,
+    feeOffered: feeOfferedRaw ? Number(feeOfferedRaw) : null,
+    course,
+  };
+
+  if (profileImage) {
+    data.profileImage = profileImage;
+  }
+
+  await prisma.student.update({ where: { id: studentId }, data });
+
+  revalidatePath("/students");
+  revalidatePath("/student-list");
+  revalidatePath("/dashboard");
+}
+
+export async function updateStaff(formData: FormData) {
+  const session = await requireSession();
+  ensureAccess("staff", session.role);
+
+  const staffId = Number(formData.get("staffId") ?? 0);
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim();
+  const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
+  const email = getOptionalString(formData, "email");
+  const contactNumber = getOptionalString(formData, "contactNumber");
+  const emergencyContact = getOptionalString(formData, "emergencyContact");
+  const address = getOptionalString(formData, "address");
+  const city = getOptionalString(formData, "city");
+  const state = getOptionalString(formData, "state");
+  const qualification = getOptionalString(formData, "qualification");
+  const experienceYearsRaw = getOptionalString(formData, "experienceYears");
+  const joiningDateRaw = getOptionalString(formData, "joiningDate");
+  const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
+
+  if (!staffId || !name || !role) {
+    throw new Error("Staff id, name and role are required.");
+  }
+
+  const data: any = {
+    name,
+    role,
+    dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
+    email,
+    contactNumber,
+    emergencyContact,
+    address,
+    city,
+    state,
+    qualification,
+    experienceYears: experienceYearsRaw ? Number(experienceYearsRaw) : null,
+    joiningDate: joiningDateRaw ? new Date(joiningDateRaw) : null,
+  };
+
+  if (profileImage) {
+    data.profileImage = profileImage;
+  }
+
+  await prisma.staff.update({ where: { id: staffId }, data });
+
+  revalidatePath("/staff");
+  revalidatePath("/staff-list");
+  revalidatePath("/dashboard");
 }
 
 export async function addCourseBatch(formData: FormData) {

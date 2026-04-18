@@ -18,7 +18,9 @@ type AppShellProps = {
 const routeMap: Record<AppModule, string> = {
   dashboard: "/dashboard",
   students: "/students",
+  studentList: "/student-list",
   staff: "/staff",
+  staffList: "/staff-list",
   attendance: "/attendance",
   fees: "/fees",
   reports: "/reports",
@@ -33,7 +35,9 @@ const routeMap: Record<AppModule, string> = {
 const labelMap: Record<AppModule, string> = {
   dashboard: "Dashboard",
   students: "Students",
+  studentList: "Student List",
   staff: "Staff",
+  staffList: "Staff List",
   attendance: "Attendance",
   fees: "Fees",
   reports: "Reports",
@@ -47,6 +51,12 @@ const labelMap: Record<AppModule, string> = {
 
 export function AppShell({ role, name, children }: AppShellProps) {
   const allowedModules = getAllowedModules(role);
+  const canSeeStudentsMenu = allowedModules.includes("students") || allowedModules.includes("studentList");
+  const canSeeStaffMenu = allowedModules.includes("staff") || allowedModules.includes("staffList");
+
+  const menuModules = allowedModules.filter(
+    (moduleName) => moduleName !== "students" && moduleName !== "studentList" && moduleName !== "staff" && moduleName !== "staffList",
+  );
 
   async function doLogout() {
     "use server";
@@ -59,7 +69,27 @@ export function AppShell({ role, name, children }: AppShellProps) {
       <div className={styles.brand}>ROL&apos;s Fun Factory</div>
       <div className={styles.role}>{name} ({role})</div>
       <nav className={styles.menu}>
-        {allowedModules.map((moduleName) => (
+        {canSeeStudentsMenu && (
+          <details className={styles.menuGroup} open>
+            <summary className={styles.menuGroupTitle}>Students</summary>
+            <div className={styles.subMenu}>
+              {allowedModules.includes("students") && <Link href="/students">Add Student</Link>}
+              {allowedModules.includes("studentList") && <Link href="/student-list">Student List</Link>}
+            </div>
+          </details>
+        )}
+
+        {canSeeStaffMenu && (
+          <details className={styles.menuGroup} open>
+            <summary className={styles.menuGroupTitle}>Staff</summary>
+            <div className={styles.subMenu}>
+              {allowedModules.includes("staff") && <Link href="/staff">Add Staff</Link>}
+              {allowedModules.includes("staffList") && <Link href="/staff-list">Staff List</Link>}
+            </div>
+          </details>
+        )}
+
+        {menuModules.map((moduleName) => (
           <Link key={moduleName} href={routeMap[moduleName]}>
             {labelMap[moduleName]}
           </Link>

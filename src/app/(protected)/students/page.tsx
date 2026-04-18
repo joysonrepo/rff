@@ -3,7 +3,33 @@ import { addStudent } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { StudentListTable } from "@/components/StudentListTable";
 import styles from "../module.module.css";
+
+function normalizeDateValue(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+
+  if (typeof value === "object") {
+    const maybeTimestamp = value as { toDate?: () => Date; _seconds?: number };
+    if (typeof maybeTimestamp.toDate === "function") {
+      return maybeTimestamp.toDate().toISOString();
+    }
+    if (typeof maybeTimestamp._seconds === "number") {
+      return new Date(maybeTimestamp._seconds * 1000).toISOString();
+    }
+  }
+
+  return null;
+}
+
+function normalizeStudents(students: any[]): any[] {
+  return students.map((student) => ({
+    ...student,
+    dateOfBirth: normalizeDateValue(student.dateOfBirth),
+  }));
+}
 
 export default async function StudentsPage() {
   const session = await requireSession();
@@ -22,46 +48,61 @@ export default async function StudentsPage() {
     students = students.filter((student: any) => student.userId === Number(session.sub));
   }
 
+  students = students.filter((student: any) => student.status !== "INACTIVE");
+
+  students = normalizeStudents(students);
+
   return (
     <div className={styles.wrap}>
       {(session.role === "FOUNDER" || session.role === "ADMIN_MANAGER") && (
         <section className={styles.section}>
-          <h2>Add Student</h2>
-          <form action={addStudent} className={styles.formGrid}>
-            <input className={styles.input} name="name" placeholder="Name" required />
-            <input className={styles.input} name="age" placeholder="Age" type="number" min={2} required />
-            <select className={styles.select} name="course">
-              <option value="MONTESSORI">Montessori</option>
-              <option value="MUSIC">Music</option>
-              <option value="TUITION">Tuition</option>
-            </select>
-            <button className={styles.button} type="submit">
-              Save Student
-            </button>
-          </form>
+          <details>
+            <summary style={{ cursor: "pointer", fontWeight: 700, marginBottom: "0.85rem" }}>Add Student</summary>
+            <form action={addStudent} className={styles.formGrid}>
+              <input className={styles.input} name="name" placeholder="Name" required />
+              <input className={styles.input} name="profileImage" type="file" accept="image/*" />
+              <input className={styles.input} name="className" placeholder="Class" required />
+              <select className={styles.select} name="howDidYouHear" required>
+                <option value="">How did you hear about us?</option>
+                <option value="SOCIAL_MEDIA">Social media</option>
+                <option value="FRIEND_REFERRAL">Friend referral</option>
+                <option value="WALK_IN">Walk-in</option>
+                <option value="ONLINE_SEARCH">Online search</option>
+                <option value="OTHER">Other</option>
+              </select>
+              <select className={styles.select} name="enquiryStatus" required>
+                <option value="">Enquiry status</option>
+                <option value="NEW">New</option>
+                <option value="FOLLOW_UP">Follow-up</option>
+                <option value="CONVERTED">Converted</option>
+              </select>
+              <input className={styles.input} name="dateOfBirth" type="date" required />
+              <input className={styles.input} name="age" placeholder="Age" type="number" min={2} required />
+              <input className={styles.input} name="city" placeholder="City" required />
+              <input className={styles.input} name="state" placeholder="State" required />
+              <input className={styles.input} name="residentialAddress" placeholder="Residential address" required />
+              <input className={styles.input} name="permanentAddress" placeholder="Permanent address" required />
+              <input className={styles.input} name="fatherName" placeholder="Father's name" required />
+              <input className={styles.input} name="fatherEmail" placeholder="Father's email" type="email" required />
+              <input className={styles.input} name="fatherMobile" placeholder="Father's mobile no." required />
+              <input className={styles.input} name="motherName" placeholder="Mother's name" required />
+              <input className={styles.input} name="motherEmail" placeholder="Mother's email" type="email" required />
+              <input className={styles.input} name="motherMobile" placeholder="Mother's mobile no." required />
+              <input className={styles.input} name="feeOffered" placeholder="Fee offered" type="number" min={0} step="0.01" required />
+              <select className={styles.select} name="course">
+                <option value="MONTESSORI">Montessori</option>
+                <option value="MUSIC">Music</option>
+                <option value="TUITION">Tuition</option>
+              </select>
+              <button className={styles.button} type="submit">
+                Save Student
+              </button>
+            </form>
+          </details>
         </section>
       )}
       <section>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Age</th>
-              <th>Course</th>
-              <th>Parent</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map((student: any) => (
-              <tr key={student.id}>
-                <td>{student.name}</td>
-                <td>{student.age}</td>
-                <td>{student.course}</td>
-                <td>{student.parent?.name ?? "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <StudentListTable students={students} showViewAction={false} />
       </section>
     </div>
   );

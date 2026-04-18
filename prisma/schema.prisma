@@ -7,53 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  FOUNDER
-  BOARD_DIRECTOR
-  ADMIN_MANAGER
-  HR
-  ACCOUNTS
-  PRINCIPAL
-  TEACHER
-  PARENT
-  STUDENT
-}
-
-enum CourseType {
-  MONTESSORI
-  MUSIC
-  TUITION
-}
-
-enum EnrollmentStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum AttendanceTargetType {
-  STUDENT
-  STAFF
-}
-
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  LATE
-}
-
-enum FeeStatus {
-  PENDING
-  PARTIAL
-  PAID
-}
-
 model User {
   id            Int            @id @default(autoincrement())
   name          String
   email         String         @unique
   password      String
-  role          Role
+  role          String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   student       Student?
@@ -79,12 +38,29 @@ model Parent {
 model Student {
   id            Int          @id @default(autoincrement())
   name          String
+  status        String       @default("ACTIVE")
+  profileImage  String?
+  className     String?
+  howDidYouHear String?
+  enquiryStatus String?
+  dateOfBirth   DateTime?
   age           Int
+  city          String?
+  state         String?
+  residentialAddress String?
+  permanentAddress   String?
+  fatherName    String?
+  fatherEmail   String?
+  fatherMobile  String?
+  motherName    String?
+  motherEmail   String?
+  motherMobile  String?
+  feeOffered    Float?
   userId        Int?         @unique
   user          User?        @relation(fields: [userId], references: [id])
   parentId      Int?
   parent        Parent?      @relation(fields: [parentId], references: [id])
-  course        CourseType
+  course        String
   batchId       Int?
   batch         Batch?       @relation(fields: [batchId], references: [id])
   attendance    Attendance[]
@@ -108,7 +84,19 @@ model Teacher {
 model Staff {
   id         Int       @id @default(autoincrement())
   name       String
+  status     String    @default("ACTIVE")
+  profileImage String?
   role       String
+  dateOfBirth DateTime?
+  email      String?
+  contactNumber String?
+  emergencyContact String?
+  address    String?
+  city       String?
+  state      String?
+  qualification String?
+  experienceYears Int?
+  joiningDate DateTime?
   userId     Int?      @unique
   user       User?     @relation(fields: [userId], references: [id])
   createdAt  DateTime  @default(now())
@@ -122,8 +110,8 @@ model Attendance {
   studentId     Int?
   student       Student?             @relation(fields: [studentId], references: [id])
   date          DateTime
-  status        AttendanceStatus
-  targetType    AttendanceTargetType
+  status        String
+  targetType    String
   markedById    Int?
   markedBy      User?                @relation("AttendanceMarker", fields: [markedById], references: [id])
   notes         String?
@@ -147,7 +135,7 @@ model Fee {
   studentId    Int
   student      Student   @relation(fields: [studentId], references: [id])
   amount       Float
-  status       FeeStatus
+  status       String
   paidOn       DateTime?
   receiptNo    String?
   createdAt    DateTime  @default(now())
@@ -156,7 +144,7 @@ model Fee {
 model Course {
   id         Int        @id @default(autoincrement())
   name       String
-  type       CourseType
+  type       String
   batches    Batch[]
   createdAt  DateTime   @default(now())
 }
@@ -176,11 +164,26 @@ model Batch {
 model Enrollment {
   id          Int              @id @default(autoincrement())
   name        String
+  className   String?
+  howDidYouHear String?
+  enquiryStatus String?
+  dateOfBirth DateTime?
   parentName  String?
   email       String
   age         Int
-  course      CourseType
-  status      EnrollmentStatus @default(PENDING)
+  city        String?
+  state       String?
+  residentialAddress String?
+  permanentAddress   String?
+  fatherName  String?
+  fatherEmail String?
+  fatherMobile String?
+  motherName  String?
+  motherEmail String?
+  motherMobile String?
+  feeOffered  Float?
+  course      String
+  status      String @default("PENDING")
   notes       String?
   createdAt   DateTime         @default(now())
   reviewedBy  Int?

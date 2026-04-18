@@ -1,4 +1,5 @@
-import { getDb } from "@/lib/firebaseAdmin";
+import { getDb, hasFirebaseAdminConfig } from "@/lib/firebaseAdmin";
+import prismaPkg from "@prisma/client";
 import {
   Attendance,
   Batch,
@@ -14,6 +15,20 @@ import {
   Teacher,
   User,
 } from "@/lib/types";
+
+const { PrismaClient } = prismaPkg;
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __sqlitePrismaClient: InstanceType<typeof PrismaClient> | undefined;
+}
+
+function getSqlitePrismaClient() {
+  if (!globalThis.__sqlitePrismaClient) {
+    globalThis.__sqlitePrismaClient = new PrismaClient();
+  }
+  return globalThis.__sqlitePrismaClient;
+}
 
 type SortDirection = "asc" | "desc";
 
@@ -154,7 +169,7 @@ function applySelect<T extends Record<string, unknown>>(items: T[], select?: Rec
   });
 }
 
-export const prisma: any = {
+const firestorePrisma: any = {
   user: {
     async findUnique(args: { where: WhereClause }) {
       return findUniqueByField<User>("users", args.where);
@@ -184,6 +199,12 @@ export const prisma: any = {
     async create(args: { data: Omit<Student, "id" | "createdAt" | "updatedAt"> }) {
       return createWithId<Student>("students", { ...args.data, createdAt: nowIso(), updatedAt: nowIso() });
     },
+    async findUnique(args: { where: WhereClause }) {
+      return findUniqueByField<Student>("students", args.where);
+    },
+    async update(args: { where: { id: number }; data: Partial<Student> }) {
+      return updateById<Student>("students", args.where.id, { ...args.data, updatedAt: nowIso() });
+    },
     async findMany(args?: {
       where?: WhereClause;
       include?: { parent?: boolean };
@@ -211,6 +232,12 @@ export const prisma: any = {
   staff: {
     async create(args: { data: Omit<Staff, "id" | "createdAt" | "updatedAt"> }) {
       return createWithId<Staff>("staff", { ...args.data, createdAt: nowIso(), updatedAt: nowIso() });
+    },
+    async findUnique(args: { where: WhereClause }) {
+      return findUniqueByField<Staff>("staff", args.where);
+    },
+    async update(args: { where: { id: number }; data: Partial<Staff> }) {
+      return updateById<Staff>("staff", args.where.id, { ...args.data, updatedAt: nowIso() });
     },
     async findMany(args?: { where?: WhereClause; orderBy?: Record<string, SortDirection> }) {
       return applyOrder(applyWhere(await listCollection<Staff>("staff"), args?.where), args?.orderBy);
@@ -346,3 +373,5 @@ export const prisma: any = {
     },
   },
 };
+
+export const prisma: any = hasFirebaseAdminConfig() ? firestorePrisma : getSqlitePrismaClient();
