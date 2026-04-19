@@ -53,24 +53,28 @@ export function hasFirebaseAdminConfig(): boolean {
   return Boolean(projectId && clientEmail && privateKey);
 }
 
-let firestoreInstance: Firestore | null = null;
+declare global {
+  // eslint-disable-next-line no-var
+  var __firestoreInstance: Firestore | undefined;
+}
 
 export function getDb(): Firestore {
-  if (firestoreInstance) {
-    return firestoreInstance;
+  if (globalThis.__firestoreInstance) {
+    return globalThis.__firestoreInstance;
   }
 
   const { projectId, clientEmail, privateKey } = getServiceAccount();
-  const app =
-    getApps()[0] ??
-    initializeApp({
-      credential: cert({
-        projectId,
-        clientEmail,
-        privateKey,
-      }),
-    });
+  const isNew = getApps().length === 0;
+  const app = isNew
+    ? initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
+      })
+    : getApps()[0];
 
-  firestoreInstance = getFirestore(app);
-  return firestoreInstance;
+  const db = getFirestore(app);
+  if (isNew) {
+    db.settings({ ignoreUndefinedProperties: true });
+  }
+  globalThis.__firestoreInstance = db;
+  return db;
 }

@@ -1,4 +1,4 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { canAccess } from "@/lib/permissions";
 import { requireSession } from "@/lib/auth";
 import styles from "../module.module.css";
@@ -69,22 +69,24 @@ export default async function DashboardPage() {
 
       <section className={styles.section}>
         <h2>Module Access Snapshot</h2>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Module</th>
-              <th>Access</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(accessSummary).map(([moduleName, allowed]) => (
-              <tr key={moduleName}>
-                <td>{moduleName}</td>
-                <td>{allowed ? "Allowed" : "Read-only / blocked"}</td>
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Access</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {Object.entries(accessSummary).map(([moduleName, allowed]) => (
+                <tr key={moduleName}>
+                  <td>{moduleName}</td>
+                  <td>{allowed ? "Allowed" : "Read-only / blocked"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

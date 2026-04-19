@@ -18,6 +18,19 @@ function getOptionalString(formData: FormData, key: string): string | null {
   return value ? value : null;
 }
 
+async function getOptionalFileDataUrl(formData: FormData, key: string, maxMb = 5): Promise<string | null> {
+  const value = formData.get(key);
+  if (!(value instanceof File) || value.size === 0) {
+    return null;
+  }
+  const maxSize = maxMb * 1024 * 1024;
+  if (value.size > maxSize) {
+    throw new Error(`File must be ${maxMb}MB or smaller.`);
+  }
+  const bytes = Buffer.from(await value.arrayBuffer());
+  return `data:${value.type};base64,${bytes.toString("base64")}`;
+}
+
 async function getOptionalImageDataUrl(formData: FormData, key: string): Promise<string | null> {
   const value = formData.get(key);
   if (!(value instanceof File) || value.size === 0) {
@@ -177,6 +190,13 @@ export async function addFee(formData: FormData) {
   const studentId = Number(formData.get("studentId") ?? 0);
   const amount = Number(formData.get("amount") ?? 0);
   const status = String(formData.get("status") ?? "PENDING") as FeeStatus;
+  const payeeName = String(formData.get("payeeName") ?? "").trim() || null;
+  const amountPaidFor = String(formData.get("amountPaidFor") ?? "").trim() || null;
+  const modeOfPayment = String(formData.get("modeOfPayment") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const dateOfPaymentRaw = String(formData.get("dateOfPayment") ?? "").trim();
+  const dateOfPayment = dateOfPaymentRaw ? new Date(dateOfPaymentRaw) : null;
+  const invoiceFile = await getOptionalFileDataUrl(formData, "invoiceFile", 5);
 
   if (!studentId || !amount) {
     throw new Error("Student and amount are required.");
@@ -189,6 +209,12 @@ export async function addFee(formData: FormData) {
       studentId,
       amount,
       status,
+      payeeName,
+      dateOfPayment,
+      amountPaidFor,
+      modeOfPayment,
+      notes,
+      invoiceFile,
       receiptNo,
       paidOn: status === "PAID" || status === "PARTIAL" ? new Date() : null,
     },

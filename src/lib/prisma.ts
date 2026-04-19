@@ -82,10 +82,16 @@ async function listCollection<T>(collectionName: string): Promise<T[]> {
   return snap.docs.map((doc) => doc.data() as T);
 }
 
+function stripUndefined(obj: object): object {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  );
+}
+
 async function createWithId<T extends { id: number }>(collectionName: string, data: Omit<T, "id">): Promise<T> {
   const db = getDb();
   const id = await getNextId(collectionName);
-  const payload = { ...(data as object), id } as T;
+  const payload = stripUndefined({ ...(data as object), id }) as T;
   await db.collection(collectionName).doc(String(id)).set(payload as object);
   return payload;
 }
@@ -101,7 +107,7 @@ async function findUniqueByField<T>(collectionName: string, where: WhereClause):
 async function updateById<T>(collectionName: string, id: number, data: Partial<T>): Promise<T> {
   const db = getDb();
   const ref = db.collection(collectionName).doc(String(id));
-  await ref.set(data as object, { merge: true });
+  await ref.set(stripUndefined(data as object), { merge: true });
   const snap = await ref.get();
   return snap.data() as T;
 }

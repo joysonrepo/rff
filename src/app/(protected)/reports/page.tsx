@@ -1,4 +1,4 @@
-﻿import { AccessDenied } from "@/components/AccessDenied";
+import { AccessDenied } from "@/components/AccessDenied";
 import { RevenueChart } from "@/components/reports/RevenueChart";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";

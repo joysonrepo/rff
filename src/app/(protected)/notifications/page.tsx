@@ -1,4 +1,4 @@
-﻿import { AccessDenied } from "@/components/AccessDenied";
+import { AccessDenied } from "@/components/AccessDenied";
 import { sendNotification } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -21,42 +21,50 @@ export default async function NotificationsPage() {
     <div className={styles.wrap}>
       {(session.role === "FOUNDER" || session.role === "ADMIN_MANAGER" || session.role === "TEACHER") && (
         <section className={styles.section}>
-          <h2>Send Announcement</h2>
-          <form action={sendNotification} className={styles.formGrid}>
-            <select name="targetRole" className={styles.select}>
-              <option value="PARENT">Parents</option>
-              <option value="STUDENT">Students</option>
-              <option value="TEACHER">Teachers</option>
-              <option value="ADMIN_MANAGER">Admin</option>
-            </select>
-            <input className={styles.input} name="title" placeholder="Title" required />
-            <input className={styles.input} name="message" placeholder="Message" required />
-            <button className={styles.button} type="submit">
-              Send
-            </button>
-          </form>
+          <details className={styles.collapsible}>
+            <summary className={styles.collapsibleSummary}>
+              <h2 className={styles.collapsibleTitle}>Send Announcement</h2>
+            </summary>
+            <div className={styles.collapsibleBody}>
+              <form action={sendNotification} className={styles.formGrid}>
+                <select name="targetRole" className={styles.select}>
+                  <option value="PARENT">Parents</option>
+                  <option value="STUDENT">Students</option>
+                  <option value="TEACHER">Teachers</option>
+                  <option value="ADMIN_MANAGER">Admin</option>
+                </select>
+                <input className={styles.input} name="title" placeholder="Title" required />
+                <input className={styles.input} name="message" placeholder="Message" required />
+                <button className={styles.button} type="submit">
+                  Send
+                </button>
+              </form>
+            </div>
+          </details>
         </section>
       )}
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Message</th>
-            <th>User</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {notifications.map((item: any) => (
-            <tr key={item.id}>
-              <td>{item.title}</td>
-              <td>{item.message}</td>
-              <td>{item.user.name}</td>
-              <td>{new Date(item.createdAt).toLocaleDateString()}</td>
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Message</th>
+              <th>User</th>
+              <th>Date</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {notifications.map((item: any) => (
+              <tr key={item.id}>
+                <td>{item.title}</td>
+                <td>{item.message}</td>
+                <td>{item.user.name}</td>
+                <td>{new Date(item.createdAt).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

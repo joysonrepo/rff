@@ -36,7 +36,7 @@ export default async function StudentListPage() {
     return <AccessDenied moduleName="students" />;
   }
 
-  let students = await prisma.student.findMany({ include: { parent: true }, orderBy: { id: "desc" } });
+  let students = await prisma.student.findMany({ include: { parent: true }, where: { status: "ACTIVE" }, orderBy: { id: "desc" } });
 
   if (session.role === "PARENT") {
     const parent = await prisma.parent.findUnique({ where: { userId: Number(session.sub) } });
@@ -46,8 +46,6 @@ export default async function StudentListPage() {
   if (session.role === "STUDENT") {
     students = students.filter((student: any) => student.userId === Number(session.sub));
   }
-
-  students = students.filter((student: any) => student.status !== "INACTIVE");
 
   students = normalizeStudents(students);
   const canManage = session.role === "FOUNDER" || session.role === "ADMIN_MANAGER";

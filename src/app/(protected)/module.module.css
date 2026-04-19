@@ -2,6 +2,14 @@
   display: grid;
   gap: 1rem;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.wrap > * {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .title {
@@ -39,6 +47,7 @@
 
 .table {
   display: table;
+  width: 100%;
   border-collapse: collapse;
   background: #fff;
   border: 1px solid #efe8de;
@@ -47,12 +56,16 @@
 }
 
 .tableScroll {
+  display: block;
+  min-width: 0;
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y;
   overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
 .responsiveTable {
@@ -64,6 +77,11 @@
 @media (max-width: 640px) {
   .responsiveTable {
     min-width: 860px;
+  }
+
+  .tableScroll {
+    margin-inline: -0.15rem;
+    padding-bottom: 0.2rem;
   }
 }
 
@@ -138,10 +156,52 @@
 }
 
 .section {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   background: #fff;
   border: 1px solid #efe8de;
   border-radius: 14px;
   padding: 1rem;
+  overflow-x: hidden;
+}
+
+.collapsible {
+  width: 100%;
+}
+
+.collapsibleSummary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.collapsibleSummary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsibleSummary::after {
+  content: "+";
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #1f2a44;
+}
+
+.collapsible[open] .collapsibleSummary::after {
+  content: "-";
+}
+
+.collapsibleTitle {
+  margin: 0;
+}
+
+.collapsibleBody {
+  margin-top: 0.85rem;
 }
 
 .dialog {
@@ -237,6 +297,10 @@
   .card,
   .section {
     padding: 0.85rem;
+  }
+
+  .collapsibleSummary::after {
+    font-size: 1.15rem;
   }
 
   .metric {

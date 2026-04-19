@@ -17,11 +17,13 @@
 
 html,
 body {
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -31,7 +33,7 @@ body {
     radial-gradient(circle at 5% 5%, #ffeccc 0%, transparent 33%),
     radial-gradient(circle at 95% 30%, #dfeeff 0%, transparent 30%),
     var(--bg);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 h1,

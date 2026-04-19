@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,13 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "ROL's Fun Factory",
   description: "Education and activity management system",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

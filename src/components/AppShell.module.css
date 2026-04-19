@@ -1,10 +1,12 @@
 .shell {
   min-height: 100vh;
   width: 100%;
+  max-width: 100dvw;
   display: grid;
   grid-template-columns: 270px 1fr;
   background: radial-gradient(circle at 15% 20%, #ffe7c2 0%, #fff9f0 34%, #f8fbff 100%);
   position: relative;
+  overflow-x: clip;
 }
 
 .hamburger {
@@ -140,12 +142,16 @@
 
 .main {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
   display: grid;
   grid-template-rows: auto 1fr;
 }
 
 .content {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
   padding: 1.4rem;
 }
 
@@ -163,6 +169,8 @@
   .shell {
     grid-template-columns: 1fr;
     display: block;
+    width: 100%;
+    max-width: 100dvw;
   }
 
   .hamburger {
@@ -247,5 +255,7 @@
 
   .content {
     padding-top: 0.8rem;
+    width: 100%;
+    max-width: 100%;
   }
 }

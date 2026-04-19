@@ -1,4 +1,4 @@
-﻿import { AccessDenied } from "@/components/AccessDenied";
+import { AccessDenied } from "@/components/AccessDenied";
 import { addStaff } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -45,26 +45,30 @@ export default async function StaffPage() {
     <div className={styles.wrap}>
       {(session.role === "FOUNDER" || session.role === "HR") && (
         <section className={styles.section}>
-          <details>
-            <summary style={{ cursor: "pointer", fontWeight: 700, marginBottom: "0.85rem" }}>Add Staff</summary>
-            <form action={addStaff} className={styles.formGrid}>
-              <input className={styles.input} name="name" placeholder="Name" required />
-              <input className={styles.input} name="profileImage" type="file" accept="image/*" />
-              <input className={styles.input} name="role" placeholder="Role" required />
-              <input className={styles.input} name="dateOfBirth" type="date" />
-              <input className={styles.input} name="email" placeholder="Email" type="email" />
-              <input className={styles.input} name="contactNumber" placeholder="Contact number" />
-              <input className={styles.input} name="emergencyContact" placeholder="Emergency contact" />
-              <input className={styles.input} name="address" placeholder="Address" />
-              <input className={styles.input} name="city" placeholder="City" />
-              <input className={styles.input} name="state" placeholder="State" />
-              <input className={styles.input} name="qualification" placeholder="Qualification" />
-              <input className={styles.input} name="experienceYears" type="number" min={0} placeholder="Experience years" />
-              <input className={styles.input} name="joiningDate" type="date" />
-              <button className={styles.button} type="submit">
-                Save Employee
-              </button>
-            </form>
+          <details className={styles.collapsible}>
+            <summary className={styles.collapsibleSummary}>
+              <h2 className={styles.collapsibleTitle}>Add Staff</h2>
+            </summary>
+            <div className={styles.collapsibleBody}>
+              <form action={addStaff} className={styles.formGrid}>
+                <input className={styles.input} name="name" placeholder="Name" required />
+                <input className={styles.input} name="profileImage" type="file" accept="image/*" />
+                <input className={styles.input} name="role" placeholder="Role" required />
+                <input className={styles.input} name="dateOfBirth" type="date" />
+                <input className={styles.input} name="email" placeholder="Email" type="email" />
+                <input className={styles.input} name="contactNumber" placeholder="Contact number" />
+                <input className={styles.input} name="emergencyContact" placeholder="Emergency contact" />
+                <input className={styles.input} name="address" placeholder="Address" />
+                <input className={styles.input} name="city" placeholder="City" />
+                <input className={styles.input} name="state" placeholder="State" />
+                <input className={styles.input} name="qualification" placeholder="Qualification" />
+                <input className={styles.input} name="experienceYears" type="number" min={0} placeholder="Experience years" />
+                <input className={styles.input} name="joiningDate" type="date" />
+                <button className={styles.button} type="submit">
+                  Save Employee
+                </button>
+              </form>
+            </div>
           </details>
         </section>
       )}

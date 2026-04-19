@@ -1,4 +1,4 @@
-﻿import { AccessDenied } from "@/components/AccessDenied";
+import { AccessDenied } from "@/components/AccessDenied";
 import { addUser, deleteUser } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
@@ -20,56 +20,64 @@ export default async function SettingsPage() {
       ) : (
         <>
           <section className={styles.section}>
-            <h2>Add User</h2>
-            <form action={addUser} className={styles.formGrid}>
-              <input className={styles.input} name="name" placeholder="Name" required />
-              <input className={styles.input} name="email" type="email" placeholder="Email" required />
-              <input className={styles.input} name="password" type="password" placeholder="Password" required />
-              <select className={styles.select} name="role">
-                <option value="FOUNDER">Founder</option>
-                <option value="BOARD_DIRECTOR">Board Director</option>
-                <option value="ADMIN_MANAGER">Admin Manager</option>
-                <option value="HR">HR</option>
-                <option value="ACCOUNTS">Accounts</option>
-                <option value="PRINCIPAL">Principal</option>
-                <option value="TEACHER">Teacher</option>
-                <option value="PARENT">Parent</option>
-                <option value="STUDENT">Student</option>
-              </select>
-              <button className={styles.button} type="submit">
-                Create User
-              </button>
-            </form>
+            <details className={styles.collapsible}>
+              <summary className={styles.collapsibleSummary}>
+                <h2 className={styles.collapsibleTitle}>Add User</h2>
+              </summary>
+              <div className={styles.collapsibleBody}>
+                <form action={addUser} className={styles.formGrid}>
+                  <input className={styles.input} name="name" placeholder="Name" required />
+                  <input className={styles.input} name="email" type="email" placeholder="Email" required />
+                  <input className={styles.input} name="password" type="password" placeholder="Password" required />
+                  <select className={styles.select} name="role">
+                    <option value="FOUNDER">Founder</option>
+                    <option value="BOARD_DIRECTOR">Board Director</option>
+                    <option value="ADMIN_MANAGER">Admin Manager</option>
+                    <option value="HR">HR</option>
+                    <option value="ACCOUNTS">Accounts</option>
+                    <option value="PRINCIPAL">Principal</option>
+                    <option value="TEACHER">Teacher</option>
+                    <option value="PARENT">Parent</option>
+                    <option value="STUDENT">Student</option>
+                  </select>
+                  <button className={styles.button} type="submit">
+                    Create User
+                  </button>
+                </form>
+              </div>
+            </details>
           </section>
           <section className={styles.section}>
             <h2>User Access Control</h2>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user: any) => (
-                  <tr key={user.id}>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.role}</td>
-                    <td>
-                      <form action={deleteUser}>
-                        <input type="hidden" name="userId" value={user.id} />
-                        <button className={styles.button} type="submit">
-                          Remove
-                        </button>
-                      </form>
-                    </td>
+            <div className={styles.tableScroll}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.map((user: any) => (
+                    <tr key={user.id}>
+                      <td>{user.name}</td>
+                      <td>{user.email}</td>
+                      <td>{user.role}</td>
+                      <td>
+                        <form action={deleteUser}>
+                          <input type="hidden" name="userId" value={user.id} />
+                          <button className={styles.button} type="submit">
+                            Remove
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         </>
       )}

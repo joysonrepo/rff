@@ -131,14 +131,20 @@ model Mark {
 }
 
 model Fee {
-  id           Int       @id @default(autoincrement())
-  studentId    Int
-  student      Student   @relation(fields: [studentId], references: [id])
-  amount       Float
-  status       String
-  paidOn       DateTime?
-  receiptNo    String?
-  createdAt    DateTime  @default(now())
+  id              Int       @id @default(autoincrement())
+  studentId       Int
+  student         Student   @relation(fields: [studentId], references: [id])
+  amount          Float
+  status          String
+  payeeName       String?
+  dateOfPayment   DateTime?
+  amountPaidFor   String?
+  modeOfPayment   String?
+  notes           String?
+  invoiceFile     String?
+  paidOn          DateTime?
+  receiptNo       String?
+  createdAt       DateTime  @default(now())
 }
 
 model Course {
