@@ -26,15 +26,25 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export async function loginUser(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
-  const user = await prisma.user.findUnique({ where: { email } });
+function normalizeLoginIdentifier(identifier: string): string {
+  const trimmed = identifier.trim().toLowerCase();
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.includes("@") ? trimmed : `${trimmed}@rff.local`;
+}
+
+export async function loginUser(identifier: string, password: string): Promise<{ ok: boolean; error?: string }> {
+  const normalized = normalizeLoginIdentifier(identifier);
+  const user = await prisma.user.findUnique({ where: { email: normalized } });
   if (!user) {
-    return { ok: false, error: "Invalid email or password" };
+    return { ok: false, error: "Invalid username or password" };
   }
 
   const isValid = await verifyPassword(password, user.password);
   if (!isValid) {
-    return { ok: false, error: "Invalid email or password" };
+    return { ok: false, error: "Invalid username or password" };
   }
 
   const token = await new SignJWT({ role: user.role, name: user.name })

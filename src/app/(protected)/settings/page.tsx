@@ -3,6 +3,7 @@ import { addUser, deleteUser } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { User } from "@/lib/types";
 import styles from "../module.module.css";
 
 export default async function SettingsPage() {
@@ -37,6 +38,7 @@ export default async function SettingsPage() {
                     <option value="ACCOUNTS">Accounts</option>
                     <option value="PRINCIPAL">Principal</option>
                     <option value="TEACHER">Teacher</option>
+                    <option value="STAFF">Staff</option>
                     <option value="PARENT">Parent</option>
                     <option value="STUDENT">Student</option>
                   </select>
@@ -60,7 +62,7 @@ export default async function SettingsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user: any) => (
+                  {users.map((user: User) => (
                     <tr key={user.id}>
                       <td>{user.name}</td>
                       <td>{user.email}</td>

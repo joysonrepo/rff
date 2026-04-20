@@ -6,12 +6,39 @@ import { prisma } from "@/lib/prisma";
 import { FeeListTable } from "@/components/FeeListTable";
 import styles from "../module.module.css";
 
+function toIsoOrNull(value: unknown): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  if (typeof value === "string" && value.trim() === "") {
+    return null;
+  }
+
+  let dateValue: Date;
+
+  if (value instanceof Date) {
+    dateValue = value;
+  } else if (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof (value as { toDate: unknown }).toDate === "function"
+  ) {
+    dateValue = (value as { toDate: () => Date }).toDate();
+  } else {
+    dateValue = new Date(value as string | number);
+  }
+
+  return Number.isNaN(dateValue.getTime()) ? null : dateValue.toISOString();
+}
+
 function normalizeFee(fee: any): any {
   return {
     ...fee,
-    dateOfPayment: fee.dateOfPayment ? new Date(fee.dateOfPayment).toISOString() : null,
-    paidOn: fee.paidOn ? new Date(fee.paidOn).toISOString() : null,
-    createdAt: fee.createdAt ? new Date(fee.createdAt).toISOString() : null,
+    dateOfPayment: toIsoOrNull(fee.dateOfPayment),
+    paidOn: toIsoOrNull(fee.paidOn),
+    createdAt: toIsoOrNull(fee.createdAt),
     invoiceFile: fee.invoiceFile ?? null,
   };
 }

@@ -5,6 +5,16 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "../module.module.css";
 
+function formatNotificationStatus(status: unknown): string {
+  if (status === "PENDING") {
+    return "Pending";
+  }
+  if (status === "RESOLVED") {
+    return "Resolved";
+  }
+  return "Info";
+}
+
 export default async function NotificationsPage() {
   const session = await requireSession();
   if (!canAccess(session.role, "notifications")) {
@@ -49,6 +59,7 @@ export default async function NotificationsPage() {
             <tr>
               <th>Title</th>
               <th>Message</th>
+              <th>Status</th>
               <th>User</th>
               <th>Date</th>
             </tr>
@@ -58,6 +69,7 @@ export default async function NotificationsPage() {
               <tr key={item.id}>
                 <td>{item.title}</td>
                 <td>{item.message}</td>
+                <td>{formatNotificationStatus(item.status)}</td>
                 <td>{item.user.name}</td>
                 <td>{new Date(item.createdAt).toLocaleDateString()}</td>
               </tr>

@@ -3,7 +3,17 @@ import { RevenueChart } from "@/components/reports/RevenueChart";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { Fee, Mark, Staff } from "@/lib/types";
 import styles from "../module.module.css";
+
+type StaffSalaryRow = Pick<Staff, "name" | "role" | "salary">;
+
+function csvEscape(value: string): string {
+  if (value.includes(",") || value.includes("\n") || value.includes("\"")) {
+    return `"${value.replace(/\"/g, '""')}"`;
+  }
+  return value;
+}
 
 export default async function ReportsPage() {
   const session = await requireSession();
@@ -11,12 +21,17 @@ export default async function ReportsPage() {
     return <AccessDenied moduleName="reports" />;
   }
 
-  const [students, staff, attendance, fees, marks] = await Promise.all([
+  const [students, staff, attendance, fees, marks, staffForSalary] = await Promise.all([
     prisma.student.count(),
     prisma.staff.count(),
     prisma.attendance.count(),
     prisma.fee.findMany(),
     prisma.mark.findMany(),
+    prisma.staff.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { name: "asc" },
+      select: { name: true, role: true, salary: true },
+    }),
   ]);
 
   const revenueData = [
@@ -26,10 +41,21 @@ export default async function ReportsPage() {
     { month: "Apr", revenue: 32000 },
   ];
 
-  const totalRevenue = fees.reduce((sum: number, fee: any) => sum + Number(fee.amount), 0);
+  const totalRevenue = fees.reduce((sum: number, fee: Fee) => sum + Number(fee.amount), 0);
   const averageMark = marks.length
-    ? Math.round(marks.reduce((sum: number, mark: any) => sum + Number(mark.marks), 0) / marks.length)
+    ? Math.round(marks.reduce((sum: number, mark: Mark) => sum + Number(mark.marks), 0) / marks.length)
     : 0;
+  const totalPayroll = staffForSalary.reduce((sum: number, employee: StaffSalaryRow) => sum + Number(employee.salary ?? 0), 0);
+
+  const staffSalaryCsvLines = [
+    "Name,Role,Salary",
+    ...staffForSalary.map((employee: StaffSalaryRow) => [
+      csvEscape(String(employee.name ?? "")),
+      csvEscape(String(employee.role ?? "")),
+      String(employee.salary ?? ""),
+    ].join(",")),
+  ];
+  const staffSalaryCsv = `data:text/csv;charset=utf-8,${encodeURIComponent(staffSalaryCsvLines.join("\n"))}`;
 
   return (
     <div className={styles.wrap}>
@@ -58,6 +84,40 @@ export default async function ReportsPage() {
       <section className={styles.section}>
         <h2>Revenue Trend</h2>
         <RevenueChart data={revenueData} />
+      </section>
+      <section className={styles.section}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+          <h2 style={{ margin: 0 }}>Staff Salary Report</h2>
+          <a className={styles.button} href={staffSalaryCsv} download="staff-salary-report.csv" style={{ textDecoration: "none", width: "auto", paddingInline: "0.9rem" }}>
+            Export CSV
+          </a>
+        </div>
+        <p className={styles.subtitle} style={{ marginTop: 0 }}>Total Monthly Salary: ₹{totalPayroll}</p>
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Salary</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staffForSalary.map((employee: StaffSalaryRow) => (
+                <tr key={`${employee.name}-${employee.role}`}>
+                  <td>{employee.name}</td>
+                  <td>{employee.role}</td>
+                  <td>{employee.salary != null ? `₹${employee.salary}` : "-"}</td>
+                </tr>
+              ))}
+              {staffForSalary.length === 0 && (
+                <tr>
+                  <td colSpan={3} style={{ textAlign: "center", color: "#888" }}>No active staff records.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

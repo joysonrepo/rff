@@ -3,6 +3,7 @@ import { addStaff } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { Staff } from "@/lib/types";
 import { StaffListTable } from "@/components/StaffListTable";
 import styles from "../module.module.css";
 
@@ -24,7 +25,7 @@ function normalizeDateValue(value: unknown): string | null {
   return null;
 }
 
-function normalizeStaff(staff: any[]): any[] {
+function normalizeStaff(staff: Staff[]): Staff[] {
   return staff.map((employee) => ({
     ...employee,
     dateOfBirth: normalizeDateValue(employee.dateOfBirth),
@@ -39,7 +40,7 @@ export default async function StaffPage() {
   }
 
   const staff = await prisma.staff.findMany({ orderBy: { id: "desc" } });
-  const normalizedStaff = normalizeStaff(staff).filter((employee: any) => employee.status !== "INACTIVE");
+  const normalizedStaff = normalizeStaff(staff).filter((employee: Staff) => employee.status !== "INACTIVE");
 
   return (
     <div className={styles.wrap}>
@@ -54,6 +55,9 @@ export default async function StaffPage() {
                 <input className={styles.input} name="name" placeholder="Name" required />
                 <input className={styles.input} name="profileImage" type="file" accept="image/*" />
                 <input className={styles.input} name="role" placeholder="Role" required />
+                <input className={styles.input} name="salary" type="number" min={0} step="0.01" placeholder="Salary" />
+                <input className={styles.input} name="username" placeholder="Staff username" required />
+                <input className={styles.input} name="password" type="password" placeholder="Staff password" required />
                 <input className={styles.input} name="dateOfBirth" type="date" />
                 <input className={styles.input} name="email" placeholder="Email" type="email" />
                 <input className={styles.input} name="contactNumber" placeholder="Contact number" />

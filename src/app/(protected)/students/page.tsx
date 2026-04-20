@@ -3,8 +3,16 @@ import { addStudent } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { Student } from "@/lib/types";
 import { StudentListTable } from "@/components/StudentListTable";
 import styles from "../module.module.css";
+
+type StudentWithParent = Student & {
+  parent?: {
+    id: number;
+    name: string;
+  } | null;
+};
 
 function normalizeDateValue(value: unknown): string | null {
   if (!value) return null;
@@ -24,7 +32,7 @@ function normalizeDateValue(value: unknown): string | null {
   return null;
 }
 
-function normalizeStudents(students: any[]): any[] {
+function normalizeStudents(students: StudentWithParent[]): StudentWithParent[] {
   return students.map((student) => ({
     ...student,
     dateOfBirth: normalizeDateValue(student.dateOfBirth),
@@ -41,11 +49,11 @@ export default async function StudentsPage() {
 
   if (session.role === "PARENT") {
     const parent = await prisma.parent.findUnique({ where: { userId: Number(session.sub) } });
-    students = students.filter((student: any) => student.parentId === parent?.id);
+    students = students.filter((student: StudentWithParent) => student.parentId === parent?.id);
   }
 
   if (session.role === "STUDENT") {
-    students = students.filter((student: any) => student.userId === Number(session.sub));
+    students = students.filter((student: StudentWithParent) => student.userId === Number(session.sub));
   }
 
   students = normalizeStudents(students);
@@ -89,7 +97,9 @@ export default async function StudentsPage() {
                 <input className={styles.input} name="motherName" placeholder="Mother's name" required />
                 <input className={styles.input} name="motherEmail" placeholder="Mother's email" type="email" required />
                 <input className={styles.input} name="motherMobile" placeholder="Mother's mobile no." required />
-                <input className={styles.input} name="feeOffered" placeholder="Fee offered" type="number" min={0} step="0.01" required />
+                <input className={styles.input} name="feeOffered" placeholder="Fees" type="number" min={0} step="0.01" required />
+                <input className={styles.input} name="username" placeholder="Student username" required />
+                <input className={styles.input} name="password" type="password" placeholder="Student password" required />
                 <select className={styles.select} name="course">
                   <option value="MONTESSORI">Montessori</option>
                   <option value="MUSIC">Music</option>

@@ -64,6 +64,7 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
           <input className={styles.input} name="name" defaultValue={staff.name ?? ""} placeholder="Name" required />
           <input className={styles.input} name="profileImage" type="file" accept="image/*" />
           <input className={styles.input} name="role" defaultValue={staff.role ?? ""} placeholder="Role" required />
+          <input className={styles.input} name="salary" type="number" min={0} step="0.01" defaultValue={staff.salary ?? ""} placeholder="Salary" />
           <input className={styles.input} name="dateOfBirth" type="date" defaultValue={dobValue} />
           <input className={styles.input} name="email" type="email" defaultValue={staff.email ?? ""} placeholder="Email" />
           <input className={styles.input} name="contactNumber" defaultValue={staff.contactNumber ?? ""} placeholder="Contact number" />

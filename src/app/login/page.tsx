@@ -17,10 +17,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   async function loginAction(formData: FormData) {
     "use server";
 
-    const email = String(formData.get("email") ?? "").trim();
+    const identifier = String(formData.get("identifier") ?? "").trim();
     const password = String(formData.get("password") ?? "").trim();
 
-    const result = await loginUser(email, password);
+    const result = await loginUser(identifier, password);
     if (!result.ok) {
       redirect("/login?error=1");
     }
@@ -33,8 +33,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <form className={styles.card} action={loginAction}>
         <h1>ROL&apos;s Fun Factory</h1>
         <p>Login to access your role dashboard.</p>
-        {params.error ? <p className={styles.error}>Invalid email or password.</p> : null}
-        <input className={styles.input} type="email" name="email" placeholder="Email" required />
+        {params.error ? <p className={styles.error}>Invalid username or password.</p> : null}
+        <input className={styles.input} type="text" name="identifier" placeholder="Username or email" required />
         <input className={styles.input} type="password" name="password" placeholder="Password" required />
         <button className={styles.button} type="submit">
           Login

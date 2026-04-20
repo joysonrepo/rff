@@ -1,8 +1,8 @@
 import { AccessDenied } from "@/components/AccessDenied";
-import { addAttendance } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { AttendanceEntryForm } from "@/components/AttendanceEntryForm";
 import styles from "../module.module.css";
 
 function todayValue() {
@@ -18,8 +18,35 @@ export default async function AttendancePage() {
   const [records, users, students] = await Promise.all([
     prisma.attendance.findMany({ include: { user: true, student: true }, orderBy: { date: "desc" }, take: 40 }),
     prisma.user.findMany({ select: { id: true, name: true, role: true } }),
-    prisma.student.findMany({ select: { id: true, name: true }, where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
+    prisma.student.findMany({ select: { id: true, name: true, userId: true }, where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
   ]);
+
+  const studentByUserId = new Map<number, { id: number; name: string }>();
+  for (const student of students) {
+    if (typeof student.userId === "number") {
+      studentByUserId.set(student.userId, { id: student.id, name: student.name });
+    }
+  }
+
+  const studentCandidates = users
+    .filter((user: { role: string }) => user.role === "STUDENT")
+    .map((user: { id: number; name: string }) => ({
+      userId: user.id,
+      studentId: studentByUserId.get(user.id)?.id ?? null,
+      name: studentByUserId.get(user.id)?.name ?? user.name,
+      role: "STUDENT" as const,
+    }));
+
+  const staffCandidates = users
+    .filter((user: { role: string }) => user.role !== "STUDENT" && user.role !== "PARENT")
+    .map((user: { id: number; name: string }) => ({
+      userId: user.id,
+      studentId: null,
+      name: user.name,
+      role: "STAFF" as const,
+    }));
+
+  const attendanceCandidates = [...studentCandidates, ...staffCandidates];
 
   const filteredRecords =
     session.role === "PARENT"
@@ -37,38 +64,7 @@ export default async function AttendancePage() {
               <h2 className={styles.collapsibleTitle}>Mark Attendance</h2>
             </summary>
             <div className={styles.collapsibleBody}>
-              <form action={addAttendance} className={styles.formGrid}>
-                <select className={styles.select} name="userId" required>
-                  <option value="">Select User</option>
-                  {users.map((user: any) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} ({user.role})
-                    </option>
-                  ))}
-                </select>
-                <select className={styles.select} name="studentId">
-                  <option value="">Select Student (optional)</option>
-                  {students.map((student: any) => (
-                    <option key={student.id} value={student.id}>
-                      {student.name}
-                    </option>
-                  ))}
-                </select>
-                <input className={styles.input} name="date" type="date" required defaultValue={todayValue()} />
-                <select className={styles.select} name="targetType">
-                  <option value="STUDENT">Student</option>
-                  <option value="STAFF">Staff</option>
-                </select>
-                <select className={styles.select} name="status">
-                  <option value="PRESENT">Present</option>
-                  <option value="ABSENT">Absent</option>
-                  <option value="LATE">Late</option>
-                </select>
-                <input className={styles.input} name="notes" placeholder="Notes" />
-                <button className={styles.button} type="submit">
-                  Save Attendance
-                </button>
-              </form>
+              <AttendanceEntryForm candidates={attendanceCandidates} defaultDate={todayValue()} />
             </div>
           </details>
         </section>

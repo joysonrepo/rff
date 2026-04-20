@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/jobs/monthly-fee-reminders",
+      "schedule": "0 9 6-31 * *"
+    }
+  ]
+}

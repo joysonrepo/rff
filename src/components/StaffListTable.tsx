@@ -28,6 +28,7 @@ export function StaffListTable({ staff, showViewAction = true, showManageActions
             <tr>
               <th>Name</th>
               <th>Role</th>
+              <th>Salary</th>
               <th>Contact</th>
               <th>Email</th>
               {(showViewAction || showManageActions) && <th>Action</th>}
@@ -38,6 +39,7 @@ export function StaffListTable({ staff, showViewAction = true, showManageActions
               <tr key={employee.id}>
                 <td>{employee.name}</td>
                 <td>{employee.role}</td>
+                <td>{employee.salary != null ? `₹${employee.salary}` : "-"}</td>
                 <td>{employee.contactNumber ?? "-"}</td>
                 <td>{employee.email ?? "-"}</td>
                 {(showViewAction || showManageActions) && (
@@ -94,6 +96,7 @@ export function StaffListTable({ staff, showViewAction = true, showManageActions
             <div className={styles.profileGrid}>
               <div><strong>Name:</strong> {selected.name}</div>
               <div><strong>Role:</strong> {selected.role}</div>
+              <div><strong>Salary:</strong> {selected.salary != null ? `₹${selected.salary}` : "-"}</div>
               <div><strong>Date of Birth:</strong> {selected.dateOfBirth ? new Date(selected.dateOfBirth).toLocaleDateString() : "-"}</div>
               <div><strong>Email:</strong> {selected.email ?? "-"}</div>
               <div><strong>Contact Number:</strong> {selected.contactNumber ?? "-"}</div>

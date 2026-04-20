@@ -357,14 +357,33 @@ const firestorePrisma: any = {
     },
   },
   notification: {
+    async create(args: { data: Omit<Notification, "id" | "createdAt" | "isRead"> & { isRead?: boolean } }) {
+      return createWithId<Notification>("notifications", {
+        ...args.data,
+        isRead: args.data.isRead ?? false,
+        status: args.data.status ?? "INFO",
+        type: args.data.type ?? "GENERAL",
+        resolvedAt: args.data.resolvedAt ?? null,
+        createdAt: nowIso(),
+      });
+    },
     async createMany(args: { data: Array<Omit<Notification, "id" | "createdAt" | "isRead"> & { isRead?: boolean }> }) {
       for (const row of args.data) {
         await createWithId<Notification>("notifications", {
           ...row,
           isRead: row.isRead ?? false,
+          status: row.status ?? "INFO",
+          type: row.type ?? "GENERAL",
+          resolvedAt: row.resolvedAt ?? null,
           createdAt: nowIso(),
         });
       }
+    },
+    async update(args: { where: { id: number }; data: Partial<Notification> }) {
+      return updateById<Notification>("notifications", args.where.id, args.data);
+    },
+    async delete(args: { where: { id: number } }) {
+      await deleteById("notifications", args.where.id);
     },
     async findMany(args?: {
       where?: WhereClause;

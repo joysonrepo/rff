@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { AttendanceStatus, AttendanceTargetType, CourseType, EnrollmentStatus, FeeStatus, Role } from "@/lib/types";
+import { sendMonthlyFeeDelayReminders } from "@/lib/feeReminders";
 
 function ensureAccess(moduleName: Parameters<typeof canAccess>[1], role: Role): void {
   if (!canAccess(role, moduleName)) {
@@ -16,6 +17,11 @@ function ensureAccess(moduleName: Parameters<typeof canAccess>[1], role: Role): 
 function getOptionalString(formData: FormData, key: string): string | null {
   const value = String(formData.get(key) ?? "").trim();
   return value ? value : null;
+}
+
+function normalizeUsernameToEmail(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  return normalized.includes("@") ? normalized : `${normalized}@rff.local`;
 }
 
 async function getOptionalFileDataUrl(formData: FormData, key: string, maxMb = 5): Promise<string | null> {
@@ -70,13 +76,31 @@ export async function addStudent(formData: FormData) {
   const motherName = getOptionalString(formData, "motherName");
   const motherEmail = getOptionalString(formData, "motherEmail");
   const motherMobile = getOptionalString(formData, "motherMobile");
-  const feeOfferedRaw = getOptionalString(formData, "feeOffered");
+  const feeOfferedRaw = getOptionalString(formData, "feeOffered") ?? getOptionalString(formData, "fees");
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "").trim();
   const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
   const course = String(formData.get("course") ?? "MONTESSORI") as CourseType;
 
-  if (!name || !age) {
-    throw new Error("Name and age are required.");
+  if (!name || !age || !username || !password) {
+    throw new Error("Name, age, username and password are required.");
   }
+
+  const loginEmail = normalizeUsernameToEmail(username);
+  const existingUser = await prisma.user.findUnique({ where: { email: loginEmail } });
+  if (existingUser) {
+    throw new Error("Username already exists. Please use a different username.");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+  const createdUser = await prisma.user.create({
+    data: {
+      name,
+      email: loginEmail,
+      password: hashedPassword,
+      role: "STUDENT",
+    },
+  });
 
   await prisma.student.create({
     data: {
@@ -99,6 +123,7 @@ export async function addStudent(formData: FormData) {
       motherEmail,
       motherMobile,
       feeOffered: feeOfferedRaw ? Number(feeOfferedRaw) : null,
+      userId: createdUser.id,
       course,
     },
   });
@@ -115,6 +140,9 @@ export async function addStaff(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
   const role = String(formData.get("role") ?? "").trim();
+  const salaryRaw = getOptionalString(formData, "salary");
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "").trim();
   const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
   const email = getOptionalString(formData, "email");
   const contactNumber = getOptionalString(formData, "contactNumber");
@@ -126,9 +154,25 @@ export async function addStaff(formData: FormData) {
   const experienceYearsRaw = getOptionalString(formData, "experienceYears");
   const joiningDateRaw = getOptionalString(formData, "joiningDate");
 
-  if (!name || !role) {
-    throw new Error("Name and staff role are required.");
+  if (!name || !role || !username || !password) {
+    throw new Error("Name, staff role, username and password are required.");
   }
+
+  const loginEmail = normalizeUsernameToEmail(username);
+  const existingUser = await prisma.user.findUnique({ where: { email: loginEmail } });
+  if (existingUser) {
+    throw new Error("Username already exists. Please use a different username.");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+  const createdUser = await prisma.user.create({
+    data: {
+      name,
+      email: loginEmail,
+      password: hashedPassword,
+      role: "STAFF",
+    },
+  });
 
   await prisma.staff.create({
     data: {
@@ -136,6 +180,7 @@ export async function addStaff(formData: FormData) {
       status: "ACTIVE",
       profileImage,
       role,
+      salary: salaryRaw ? Number(salaryRaw) : null,
       dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
       email,
       contactNumber,
@@ -146,10 +191,12 @@ export async function addStaff(formData: FormData) {
       qualification,
       experienceYears: experienceYearsRaw ? Number(experienceYearsRaw) : null,
       joiningDate: joiningDateRaw ? new Date(joiningDateRaw) : null,
+      userId: createdUser.id,
     },
   });
   revalidatePath("/staff");
   revalidatePath("/staff-list");
+  revalidatePath("/settings");
 }
 
 export async function addAttendance(formData: FormData) {
@@ -157,8 +204,8 @@ export async function addAttendance(formData: FormData) {
   ensureAccess("attendance", session.role);
 
   const userId = Number(formData.get("userId") ?? 0);
-  const studentIdRaw = formData.get("studentId");
-  const studentId = studentIdRaw ? Number(studentIdRaw) : null;
+  const studentIdValue = String(formData.get("studentId") ?? "").trim();
+  const studentId = studentIdValue ? Number(studentIdValue) : null;
   const targetType = String(formData.get("targetType") ?? "STUDENT") as AttendanceTargetType;
   const status = String(formData.get("status") ?? "PRESENT") as AttendanceStatus;
   const notes = String(formData.get("notes") ?? "").trim();
@@ -168,10 +215,32 @@ export async function addAttendance(formData: FormData) {
     throw new Error("User and date are required.");
   }
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new Error("Selected user was not found.");
+  }
+
+  if (targetType === "STUDENT") {
+    if (user.role !== "STUDENT") {
+      throw new Error("Selected name is not a student account.");
+    }
+
+    if (studentId) {
+      const student = await prisma.student.findUnique({ where: { id: studentId } });
+      if (!student || (student.userId != null && student.userId !== userId)) {
+        throw new Error("Selected student mapping is invalid.");
+      }
+    }
+  }
+
+  if (targetType === "STAFF" && (user.role === "STUDENT" || user.role === "PARENT")) {
+    throw new Error("Selected name is not a staff account.");
+  }
+
   await prisma.attendance.create({
     data: {
       userId,
-      studentId,
+      studentId: targetType === "STUDENT" ? studentId : null,
       date: new Date(dateRaw),
       status,
       targetType,
@@ -220,8 +289,11 @@ export async function addFee(formData: FormData) {
     },
   });
 
+  await sendMonthlyFeeDelayReminders(new Date(), [studentId]);
+
   revalidatePath("/fees");
   revalidatePath("/reports");
+  revalidatePath("/notifications");
 }
 
 export async function addEvent(formData: FormData) {
@@ -401,7 +473,7 @@ export async function updateStudent(formData: FormData) {
   const motherName = getOptionalString(formData, "motherName");
   const motherEmail = getOptionalString(formData, "motherEmail");
   const motherMobile = getOptionalString(formData, "motherMobile");
-  const feeOfferedRaw = getOptionalString(formData, "feeOffered");
+  const feeOfferedRaw = getOptionalString(formData, "feeOffered") ?? getOptionalString(formData, "fees");
   const course = String(formData.get("course") ?? "MONTESSORI") as CourseType;
   const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
 
@@ -409,7 +481,7 @@ export async function updateStudent(formData: FormData) {
     throw new Error("Student id, name, and age are required.");
   }
 
-  const data: any = {
+  const data: Record<string, unknown> = {
     name,
     className,
     howDidYouHear,
@@ -448,6 +520,7 @@ export async function updateStaff(formData: FormData) {
   const staffId = Number(formData.get("staffId") ?? 0);
   const name = String(formData.get("name") ?? "").trim();
   const role = String(formData.get("role") ?? "").trim();
+  const salaryRaw = getOptionalString(formData, "salary");
   const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
   const email = getOptionalString(formData, "email");
   const contactNumber = getOptionalString(formData, "contactNumber");
@@ -464,9 +537,10 @@ export async function updateStaff(formData: FormData) {
     throw new Error("Staff id, name and role are required.");
   }
 
-  const data: any = {
+  const data: Record<string, unknown> = {
     name,
     role,
+    salary: salaryRaw ? Number(salaryRaw) : null,
     dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
     email,
     contactNumber,
@@ -550,10 +624,14 @@ export async function sendNotification(formData: FormData) {
   const users = await prisma.user.findMany({ where: { role: targetRole }, select: { id: true } });
 
   await prisma.notification.createMany({
-    data: users.map((user: any) => ({
+    data: users.map((user: { id: number }) => ({
       userId: user.id,
       title,
       message,
+      status: "INFO",
+      type: "GENERAL",
+      monthKey: null,
+      resolvedAt: null,
     })),
   });
 

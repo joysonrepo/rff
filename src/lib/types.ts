@@ -6,6 +6,7 @@ export type Role =
   | "ACCOUNTS"
   | "PRINCIPAL"
   | "TEACHER"
+  | "STAFF"
   | "PARENT"
   | "STUDENT";
 
@@ -78,6 +79,7 @@ export type Staff = {
   status?: "ACTIVE" | "INACTIVE" | null;
   profileImage?: string | null;
   role: string;
+  salary?: number | null;
   dateOfBirth?: string | null;
   email?: string | null;
   contactNumber?: string | null;
@@ -183,5 +185,9 @@ export type Notification = {
   title: string;
   message: string;
   isRead: boolean;
+  status?: "INFO" | "PENDING" | "RESOLVED";
+  type?: "GENERAL" | "MONTHLY_FEE_PENDING";
+  monthKey?: string | null;
+  resolvedAt?: string | null;
   createdAt: string;
 };

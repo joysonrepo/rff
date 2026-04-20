@@ -19,6 +19,38 @@ type FeeWithStudent = {
   student: { name: string };
 };
 
+function parseDateValue(value?: string | null): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatDate(value?: string | null): string {
+  const parsed = parseDateValue(value);
+  if (!parsed) {
+    return "-";
+  }
+
+  const iso = parsed.toISOString().slice(0, 10);
+  const [year, month, day] = iso.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function formatDateTime(value?: string | null): string {
+  const parsed = parseDateValue(value);
+  if (!parsed) {
+    return "-";
+  }
+
+  const iso = parsed.toISOString();
+  const date = iso.slice(0, 10);
+  const time = iso.slice(11, 19);
+  return `${date} ${time} UTC`;
+}
+
 export function FeeListTable({ fees }: { fees: FeeWithStudent[] }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = useMemo(() => fees.find((f) => f.id === selectedId) ?? null, [fees, selectedId]);
@@ -48,7 +80,7 @@ export function FeeListTable({ fees }: { fees: FeeWithStudent[] }) {
                 <td>{fee.status}</td>
                 <td>{fee.modeOfPayment ?? "-"}</td>
                 <td>{fee.receiptNo ?? "-"}</td>
-                <td>{fee.dateOfPayment ? new Date(fee.dateOfPayment).toLocaleDateString() : "-"}</td>
+                <td>{formatDate(fee.dateOfPayment)}</td>
                 <td>
                   <button
                     type="button"
@@ -92,10 +124,10 @@ export function FeeListTable({ fees }: { fees: FeeWithStudent[] }) {
             <div><strong>Mode of Payment:</strong> {selected.modeOfPayment ?? "-"}</div>
             <div><strong>Status:</strong> {selected.status}</div>
             <div><strong>Receipt No:</strong> {selected.receiptNo ?? "-"}</div>
-            <div><strong>Date of Payment:</strong> {selected.dateOfPayment ? new Date(selected.dateOfPayment).toLocaleDateString() : "-"}</div>
-            <div><strong>Paid On:</strong> {selected.paidOn ? new Date(selected.paidOn).toLocaleDateString() : "-"}</div>
+            <div><strong>Date of Payment:</strong> {formatDate(selected.dateOfPayment)}</div>
+            <div><strong>Paid On:</strong> {formatDate(selected.paidOn)}</div>
             <div><strong>Notes:</strong> {selected.notes ?? "-"}</div>
-            <div><strong>Created:</strong> {selected.createdAt ? new Date(selected.createdAt).toLocaleString() : "-"}</div>
+            <div><strong>Created:</strong> {formatDateTime(selected.createdAt)}</div>
             {selected.invoiceFile && (
               <div style={{ gridColumn: "1 / -1", marginTop: "0.5rem" }}>
                 <strong>Invoice / Snapshot:</strong>
