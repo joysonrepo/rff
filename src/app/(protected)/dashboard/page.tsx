@@ -11,6 +11,7 @@ const roleMessages = {
   ACCOUNTS: "Fee collections, receipts, and finance reports.",
   PRINCIPAL: "Academic supervision and performance monitoring.",
   TEACHER: "Class management, attendance, and marks upload.",
+  STAFF: "Your schedule, events, and announcements.",
   PARENT: "Child progress, attendance, and fee updates.",
   STUDENT: "Your attendance, marks, notes, and schedule.",
 };
