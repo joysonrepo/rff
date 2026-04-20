@@ -124,6 +124,12 @@ export type Fee = {
   paidOn?: string | null;
   receiptNo?: string | null;
   createdAt: string;
+  dateOfPayment?: string | null;
+  amountPaidFor?: string | null;
+  modeOfPayment?: string | null;
+  notes?: string | null;
+  payeeName?: string | null;
+  invoiceFile?: string | null;
 };
 
 export type Course = {
