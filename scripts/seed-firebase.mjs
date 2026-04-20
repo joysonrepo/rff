@@ -56,8 +56,8 @@ async function main() {
 
   const parents = [{ id: 1, name: "Parent Ravi", contact: "+91-9000000001", userId: 8, createdAt: now, updatedAt: now }];
   const teachers = [{ id: 1, name: "Teacher Mira", subject: "Music", userId: 7, createdAt: now, updatedAt: now }];
-  const students = [{ id: 1, name: "Student Arul", age: 8, userId: 9, parentId: 1, course: "MONTESSORI", batchId: 1, createdAt: now, updatedAt: now }];
-  const staff = [{ id: 1, name: "Keerthi", role: "Coordinator", createdAt: now, updatedAt: now }];
+  const students = [{ id: 1, name: "Student Arul", age: 8, status: "ACTIVE", userId: 9, parentId: 1, course: "TUITION", batchId: 1, createdAt: now, updatedAt: now }];
+  const staff = [{ id: 1, name: "Keerthi", role: "Coordinator", salary: null, status: "ACTIVE", createdAt: now, updatedAt: now }];
   const courses = [
     { id: 1, name: "Montessori Foundation", type: "MONTESSORI", createdAt: now },
     { id: 2, name: "Music Basics", type: "MUSIC", createdAt: now },
@@ -76,6 +76,10 @@ async function main() {
       title: "Welcome to ROL's Fun Factory",
       message: "Your student portal is ready. Please check today's activities and announcements.",
       isRead: false,
+      status: "INFO",
+      type: "GENERAL",
+      monthKey: null,
+      resolvedAt: null,
       createdAt: now,
     },
   ];
