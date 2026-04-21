@@ -29,7 +29,7 @@ export default async function MarksPage() {
 
   return (
     <div className={styles.wrap}>
-      {(session.role === "FOUNDER" || session.role === "TEACHER" || session.role === "PRINCIPAL") && (
+      {(session.role === "FOUNDER" || session.role === "TEACHER" || session.role === "PRINCIPAL" || session.role === "STAFF") && (
         <section className={styles.section}>
           <details className={styles.collapsible}>
             <summary className={styles.collapsibleSummary}>

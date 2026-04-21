@@ -226,6 +226,10 @@ export async function addAttendance(formData: FormData) {
     throw new Error("User and date are required.");
   }
 
+  if ((session.role === "TEACHER" || session.role === "STAFF") && targetType !== "STUDENT") {
+    throw new Error("Teachers and staff can only mark student attendance.");
+  }
+
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     throw new Error("Selected user was not found.");

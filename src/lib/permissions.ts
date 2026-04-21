@@ -41,7 +41,7 @@ const permissionMap: Record<Role, AppModule[]> = {
   ACCOUNTS: ["dashboard", "fees", "reports", "staff", "staffList"],
   PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "marks", "reports", "events"],
   TEACHER: ["dashboard", "students", "studentList", "attendance", "marks", "events", "notifications"],
-  STAFF: ["dashboard", "events", "notifications"],
+  STAFF: ["dashboard", "attendance", "events", "notifications", "marks"],
   PARENT: ["dashboard", "students", "studentList", "attendance", "marks", "fees", "events", "notifications"],
   STUDENT: ["dashboard", "attendance", "marks", "events", "notifications"],
 };

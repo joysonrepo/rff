@@ -47,6 +47,8 @@ export default async function AttendancePage() {
     }));
 
   const attendanceCandidates = [...studentCandidates, ...staffCandidates];
+  const allowedTargetTypes =
+    session.role === "TEACHER" || session.role === "STAFF" ? (["STUDENT"] as const) : (["STUDENT", "STAFF"] as const);
 
   const filteredRecords =
     session.role === "PARENT"
@@ -57,14 +59,14 @@ export default async function AttendancePage() {
 
   return (
     <div className={styles.wrap}>
-      {(session.role === "FOUNDER" || session.role === "TEACHER" || session.role === "HR" || session.role === "ADMIN_MANAGER") && (
+      {(session.role === "FOUNDER" || session.role === "TEACHER" || session.role === "HR" || session.role === "ADMIN_MANAGER" || session.role === "STAFF") && (
         <section className={styles.section}>
           <details className={styles.collapsible}>
             <summary className={styles.collapsibleSummary}>
               <h2 className={styles.collapsibleTitle}>Mark Attendance</h2>
             </summary>
             <div className={styles.collapsibleBody}>
-              <AttendanceEntryForm candidates={attendanceCandidates} defaultDate={todayValue()} />
+              <AttendanceEntryForm candidates={attendanceCandidates} defaultDate={todayValue()} allowedTargetTypes={[...allowedTargetTypes]} />
             </div>
           </details>
         </section>

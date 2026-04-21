@@ -12,6 +12,7 @@ import { PageHeaderTitle } from "@/components/PageHeaderTitle";
 type AppShellProps = {
   role: Role;
   name: string;
+  profileImage?: string | null;
   children: ReactNode;
 };
 
@@ -49,10 +50,11 @@ const labelMap: Record<AppModule, string> = {
   marks: "Marks",
 };
 
-export function AppShell({ role, name, children }: AppShellProps) {
+export function AppShell({ role, name, profileImage, children }: AppShellProps) {
   const allowedModules = getAllowedModules(role);
   const canSeeStudentsMenu = allowedModules.includes("students") || allowedModules.includes("studentList");
   const canSeeStaffMenu = allowedModules.includes("staff") || allowedModules.includes("staffList");
+  const resolvedProfileImage = typeof profileImage === "string" && profileImage.trim() ? profileImage.trim() : null;
 
   const menuModules = allowedModules.filter(
     (moduleName) => moduleName !== "students" && moduleName !== "studentList" && moduleName !== "staff" && moduleName !== "staffList",
@@ -98,14 +100,28 @@ export function AppShell({ role, name, children }: AppShellProps) {
     </>
   );
 
+  const initial = name.trim().charAt(0).toUpperCase() || "U";
+
   return (
     <AppShellClient sidebarContent={sidebarContent}>
       <section className={styles.main}>
         <header className={styles.top}>
           <PageHeaderTitle />
-          <form action={doLogout}>
-            <button type="submit">Logout</button>
-          </form>
+          <div className={styles.topActions}>
+            <div className={styles.userChip} aria-label={`Logged in as ${name}`}>
+              {resolvedProfileImage ? (
+                <img src={resolvedProfileImage} alt={`${name} profile`} className={styles.userAvatar} />
+              ) : (
+                <span className={styles.userAvatarFallback} aria-hidden="true">
+                  {initial}
+                </span>
+              )}
+              <span className={styles.userName}>{name}</span>
+            </div>
+            <form action={doLogout}>
+              <button type="submit">Logout</button>
+            </form>
+          </div>
         </header>
         <main className={styles.content}>{children}</main>
       </section>

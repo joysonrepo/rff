@@ -15,33 +15,42 @@ type AttendanceCandidate = {
 type AttendanceEntryFormProps = {
   candidates: AttendanceCandidate[];
   defaultDate: string;
+  allowedTargetTypes?: AttendanceTargetType[];
 };
 
-export function AttendanceEntryForm({ candidates, defaultDate }: AttendanceEntryFormProps) {
-  const [targetType, setTargetType] = useState<AttendanceTargetType>("STUDENT");
+export function AttendanceEntryForm({
+  candidates,
+  defaultDate,
+  allowedTargetTypes = ["STUDENT", "STAFF"],
+}: AttendanceEntryFormProps) {
+  const [targetType, setTargetType] = useState<AttendanceTargetType>(allowedTargetTypes[0] ?? "STUDENT");
   const [nameQuery, setNameQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
+  const optionLabel = (candidate: AttendanceCandidate): string => `${candidate.name} (${candidate.role})`;
 
   const datalistId = `attendance-name-list-${targetType.toLowerCase()}`;
 
+  const matchingCandidates = useMemo(
+    () => candidates.filter((candidate) => candidate.role === targetType),
+    [candidates, targetType],
+  );
+
   const filteredCandidates = useMemo(
     () =>
-      candidates.filter((candidate) => {
-        if (candidate.role !== targetType) {
-          return false;
-        }
-
+      matchingCandidates.filter((candidate) => {
         if (!nameQuery.trim()) {
           return true;
         }
 
-        return candidate.name.toLowerCase().includes(nameQuery.trim().toLowerCase());
+        const normalizedQuery = nameQuery.trim().toLowerCase();
+        return (
+          candidate.name.toLowerCase().includes(normalizedQuery) ||
+          optionLabel(candidate).toLowerCase().includes(normalizedQuery)
+        );
       }),
-    [candidates, targetType, nameQuery],
+    [matchingCandidates, nameQuery],
   );
-
-  const optionLabel = (candidate: AttendanceCandidate): string => `${candidate.name} (${candidate.role})`;
 
   function handleTargetChange(nextTargetType: AttendanceTargetType) {
     setTargetType(nextTargetType);
@@ -51,14 +60,14 @@ export function AttendanceEntryForm({ candidates, defaultDate }: AttendanceEntry
   }
 
   function resolveSelection(value: string) {
-    const exactMatch = filteredCandidates.find((candidate) => optionLabel(candidate) === value);
+    const exactMatch = matchingCandidates.find((candidate) => optionLabel(candidate) === value);
     if (exactMatch) {
       setSelectedUserId(String(exactMatch.userId));
       setSelectedStudentId(exactMatch.studentId != null ? String(exactMatch.studentId) : "");
       return;
     }
 
-    const byNameMatches = filteredCandidates.filter((candidate) =>
+    const byNameMatches = matchingCandidates.filter((candidate) =>
       candidate.name.toLowerCase() === value.trim().toLowerCase(),
     );
 
@@ -75,15 +84,22 @@ export function AttendanceEntryForm({ candidates, defaultDate }: AttendanceEntry
 
   return (
     <form action={addAttendance} className={styles.formGrid}>
-      <select
-        className={styles.select}
-        name="targetType"
-        value={targetType}
-        onChange={(event) => handleTargetChange(event.target.value as AttendanceTargetType)}
-      >
-        <option value="STUDENT">Student</option>
-        <option value="STAFF">Staff</option>
-      </select>
+      {allowedTargetTypes.length > 1 ? (
+        <select
+          className={styles.select}
+          name="targetType"
+          value={targetType}
+          onChange={(event) => handleTargetChange(event.target.value as AttendanceTargetType)}
+        >
+          {allowedTargetTypes.includes("STUDENT") && <option value="STUDENT">Student</option>}
+          {allowedTargetTypes.includes("STAFF") && <option value="STAFF">Staff</option>}
+        </select>
+      ) : (
+        <>
+          <input type="hidden" name="targetType" value={targetType} />
+          <input className={styles.input} value={targetType === "STUDENT" ? "Student" : "Staff"} readOnly aria-label="Attendance target type" />
+        </>
+      )}
 
       <input
         className={styles.input}
