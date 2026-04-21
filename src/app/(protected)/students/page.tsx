@@ -5,6 +5,7 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Student } from "@/lib/types";
 import { StudentListTable } from "@/components/StudentListTable";
+import { ValidatedProfileImageInput } from "@/components/ValidatedProfileImageInput";
 import styles from "../module.module.css";
 
 type StudentWithParent = Student & {
@@ -69,7 +70,7 @@ export default async function StudentsPage() {
             <div className={styles.collapsibleBody}>
               <form action={addStudent} className={styles.formGrid}>
                 <input className={styles.input} name="name" placeholder="Name" required />
-                <input className={styles.input} name="profileImage" type="file" accept="image/*" />
+                <ValidatedProfileImageInput className={styles.input} />
                 <input className={styles.input} name="className" placeholder="Class" required />
                 <select className={styles.select} name="howDidYouHear" required>
                   <option value="">How did you hear about us?</option>

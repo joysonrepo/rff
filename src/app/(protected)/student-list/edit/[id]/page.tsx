@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/AccessDenied";
+import { ValidatedProfileImageInput } from "@/components/ValidatedProfileImageInput";
 import { updateStudent } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -61,7 +62,7 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
         <form action={updateStudent} className={styles.formGrid}>
           <input type="hidden" name="studentId" value={student.id} />
           <input className={styles.input} name="name" defaultValue={student.name ?? ""} placeholder="Name" required />
-          <input className={styles.input} name="profileImage" type="file" accept="image/*" />
+          <ValidatedProfileImageInput className={styles.input} />
           <input className={styles.input} name="className" defaultValue={student.className ?? ""} placeholder="Class" />
           <input className={styles.input} name="howDidYouHear" defaultValue={student.howDidYouHear ?? ""} placeholder="How did you hear about us" />
           <input className={styles.input} name="enquiryStatus" defaultValue={student.enquiryStatus ?? ""} placeholder="Enquiry status" />

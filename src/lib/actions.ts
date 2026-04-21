@@ -8,6 +8,9 @@ import bcrypt from "bcryptjs";
 import { AttendanceStatus, AttendanceTargetType, CourseType, EnrollmentStatus, FeeStatus, Role } from "@/lib/types";
 import { sendMonthlyFeeDelayReminders } from "@/lib/feeReminders";
 
+const FIRESTORE_SAFE_DATA_URL_MAX_BYTES = 900 * 1024;
+const PROFILE_IMAGE_MAX_BYTES = 700 * 1024;
+
 function ensureAccess(moduleName: Parameters<typeof canAccess>[1], role: Role): void {
   if (!canAccess(role, moduleName)) {
     throw new Error("You do not have permission for this module.");
@@ -34,7 +37,11 @@ async function getOptionalFileDataUrl(formData: FormData, key: string, maxMb = 5
     throw new Error(`File must be ${maxMb}MB or smaller.`);
   }
   const bytes = Buffer.from(await value.arrayBuffer());
-  return `data:${value.type};base64,${bytes.toString("base64")}`;
+  const dataUrl = `data:${value.type};base64,${bytes.toString("base64")}`;
+  if (Buffer.byteLength(dataUrl, "utf8") > FIRESTORE_SAFE_DATA_URL_MAX_BYTES) {
+    throw new Error("File is too large to store inline. Please upload a smaller file.");
+  }
+  return dataUrl;
 }
 
 async function getOptionalImageDataUrl(formData: FormData, key: string): Promise<string | null> {
@@ -47,13 +54,17 @@ async function getOptionalImageDataUrl(formData: FormData, key: string): Promise
     throw new Error("Profile image must be a valid image file.");
   }
 
-  const maxSize = 2 * 1024 * 1024;
+  const maxSize = PROFILE_IMAGE_MAX_BYTES;
   if (value.size > maxSize) {
-    throw new Error("Profile image must be 2MB or smaller.");
+    throw new Error("Profile image must be 700KB or smaller.");
   }
 
   const bytes = Buffer.from(await value.arrayBuffer());
-  return `data:${value.type};base64,${bytes.toString("base64")}`;
+  const dataUrl = `data:${value.type};base64,${bytes.toString("base64")}`;
+  if (Buffer.byteLength(dataUrl, "utf8") > FIRESTORE_SAFE_DATA_URL_MAX_BYTES) {
+    throw new Error("Profile image is too large after encoding. Please upload a smaller image.");
+  }
+  return dataUrl;
 }
 
 export async function addStudent(formData: FormData) {

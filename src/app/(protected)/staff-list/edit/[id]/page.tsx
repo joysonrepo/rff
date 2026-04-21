@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/AccessDenied";
+import { ValidatedProfileImageInput } from "@/components/ValidatedProfileImageInput";
 import { updateStaff } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -62,7 +63,7 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
         <form action={updateStaff} className={styles.formGrid}>
           <input type="hidden" name="staffId" value={staff.id} />
           <input className={styles.input} name="name" defaultValue={staff.name ?? ""} placeholder="Name" required />
-          <input className={styles.input} name="profileImage" type="file" accept="image/*" />
+          <ValidatedProfileImageInput className={styles.input} />
           <input className={styles.input} name="role" defaultValue={staff.role ?? ""} placeholder="Role" required />
           <input className={styles.input} name="salary" type="number" min={0} step="0.01" defaultValue={staff.salary ?? ""} placeholder="Salary" />
           <input className={styles.input} name="dateOfBirth" type="date" defaultValue={dobValue} />

@@ -5,6 +5,7 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { Staff } from "@/lib/types";
 import { StaffListTable } from "@/components/StaffListTable";
+import { ValidatedProfileImageInput } from "@/components/ValidatedProfileImageInput";
 import styles from "../module.module.css";
 
 function normalizeDateValue(value: unknown): string | null {
@@ -53,7 +54,7 @@ export default async function StaffPage() {
             <div className={styles.collapsibleBody}>
               <form action={addStaff} className={styles.formGrid}>
                 <input className={styles.input} name="name" placeholder="Name" required />
-                <input className={styles.input} name="profileImage" type="file" accept="image/*" />
+                <ValidatedProfileImageInput className={styles.input} />
                 <input className={styles.input} name="role" placeholder="Role" required />
                 <input className={styles.input} name="salary" type="number" min={0} step="0.01" placeholder="Salary" />
                 <input className={styles.input} name="username" placeholder="Staff username" required />
