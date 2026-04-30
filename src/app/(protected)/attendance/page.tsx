@@ -5,6 +5,31 @@ import { prisma } from "@/lib/prisma";
 import { AttendanceEntryForm } from "@/components/AttendanceEntryForm";
 import styles from "../module.module.css";
 
+type AttendanceUserRow = {
+  id: number;
+  name: string;
+  role: string;
+};
+
+type AttendanceStudentRow = {
+  id: number;
+  name: string;
+  userId?: number | null;
+};
+
+type AttendanceRecordRow = {
+  id: number;
+  userId: number;
+  date: string | Date;
+  status: string;
+  targetType: string;
+  notes?: string | null;
+  user: {
+    name: string;
+    role: string;
+  };
+};
+
 function todayValue() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -21,25 +46,29 @@ export default async function AttendancePage() {
     prisma.student.findMany({ select: { id: true, name: true, userId: true }, where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
   ]);
 
+  const typedUsers = users as AttendanceUserRow[];
+  const typedStudents = students as AttendanceStudentRow[];
+  const typedRecords = records as unknown as AttendanceRecordRow[];
+
   const studentByUserId = new Map<number, { id: number; name: string }>();
-  for (const student of students) {
+  for (const student of typedStudents) {
     if (typeof student.userId === "number") {
       studentByUserId.set(student.userId, { id: student.id, name: student.name });
     }
   }
 
-  const studentCandidates = users
-    .filter((user: { role: string }) => user.role === "STUDENT")
-    .map((user: { id: number; name: string }) => ({
+  const studentCandidates = typedUsers
+    .filter((user) => user.role === "STUDENT")
+    .map((user) => ({
       userId: user.id,
       studentId: studentByUserId.get(user.id)?.id ?? null,
       name: studentByUserId.get(user.id)?.name ?? user.name,
       role: "STUDENT" as const,
     }));
 
-  const staffCandidates = users
-    .filter((user: { role: string }) => user.role !== "STUDENT" && user.role !== "PARENT")
-    .map((user: { id: number; name: string }) => ({
+  const staffCandidates = typedUsers
+    .filter((user) => user.role !== "STUDENT" && user.role !== "PARENT")
+    .map((user) => ({
       userId: user.id,
       studentId: null,
       name: user.name,
@@ -52,10 +81,10 @@ export default async function AttendancePage() {
 
   const filteredRecords =
     session.role === "PARENT"
-      ? records.filter((record: any) => record.user.role === "STUDENT")
+      ? typedRecords.filter((record) => record.user.role === "STUDENT")
       : session.role === "STUDENT"
-        ? records.filter((record: any) => record.userId === Number(session.sub))
-        : records;
+        ? typedRecords.filter((record) => record.userId === Number(session.sub))
+        : typedRecords;
 
   return (
     <div className={styles.wrap}>
@@ -83,7 +112,7 @@ export default async function AttendancePage() {
             </tr>
           </thead>
           <tbody>
-            {filteredRecords.map((record: any) => (
+            {filteredRecords.map((record) => (
               <tr key={record.id}>
                 <td>{new Date(record.date).toLocaleDateString()}</td>
                 <td>{record.user.name}</td>

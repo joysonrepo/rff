@@ -6,6 +6,33 @@ import { prisma } from "@/lib/prisma";
 import { FeeListTable } from "@/components/FeeListTable";
 import styles from "../module.module.css";
 
+type FeeStudentRow = {
+  id: number;
+  name: string;
+  userId?: number | null;
+};
+
+type FeeRow = {
+  id: number;
+  amount: number;
+  status: string;
+  receiptNo?: string | null;
+  payeeName?: string | null;
+  amountPaidFor?: string | null;
+  modeOfPayment?: string | null;
+  notes?: string | null;
+  student: FeeStudentRow;
+  dateOfPayment?: string | Date | null;
+  paidOn?: string | Date | null;
+  createdAt?: string | Date | null;
+  invoiceFile?: string | null;
+};
+
+type StudentOptionRow = {
+  id: number;
+  name: string;
+};
+
 function toIsoOrNull(value: unknown): string | null {
   if (value == null) {
     return null;
@@ -33,7 +60,13 @@ function toIsoOrNull(value: unknown): string | null {
   return Number.isNaN(dateValue.getTime()) ? null : dateValue.toISOString();
 }
 
-function normalizeFee(fee: any): any {
+type NormalizedFeeRow = Omit<FeeRow, "dateOfPayment" | "paidOn" | "createdAt"> & {
+  dateOfPayment?: string | null;
+  paidOn?: string | null;
+  createdAt?: string | null;
+};
+
+function normalizeFee(fee: FeeRow): NormalizedFeeRow {
   return {
     ...fee,
     dateOfPayment: toIsoOrNull(fee.dateOfPayment),
@@ -54,12 +87,15 @@ export default async function FeesPage() {
     prisma.student.findMany({ select: { id: true, name: true }, where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
   ]);
 
+  const typedFees = fees as unknown as FeeRow[];
+  const typedStudents = students as StudentOptionRow[];
+
   const filteredFees =
     session.role === "PARENT"
-      ? fees
+      ? typedFees
       : session.role === "STUDENT"
-        ? fees.filter((fee: any) => fee.student.userId === Number(session.sub))
-        : fees;
+        ? typedFees.filter((fee) => fee.student.userId === Number(session.sub))
+        : typedFees;
 
   const normalizedFees = filteredFees.map(normalizeFee);
 
@@ -75,7 +111,7 @@ export default async function FeesPage() {
               <form className={styles.formGrid} action={addFee}>
                 <select className={styles.select} name="studentId" required>
                   <option value="">Select student</option>
-                  {students.map((student: any) => (
+                  {typedStudents.map((student) => (
                     <option key={student.id} value={student.id}>
                       {student.name}
                     </option>

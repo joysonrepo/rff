@@ -23,7 +23,7 @@ body {
 }
 
 html {
-  overflow-x: clip;
+  overflow-x: auto;
 }
 
 body {
@@ -33,7 +33,7 @@ body {
     radial-gradient(circle at 5% 5%, #ffeccc 0%, transparent 33%),
     radial-gradient(circle at 95% 30%, #dfeeff 0%, transparent 30%),
     var(--bg);
-  overflow-x: clip;
+  overflow-x: auto;
 }
 
 h1,
@@ -52,4 +52,20 @@ select,
 textarea,
 button {
   font: inherit;
+}
+
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

@@ -5,13 +5,38 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "../module.module.css";
 
+type EnrollmentRow = {
+  id: number;
+  name: string;
+  className?: string | null;
+  parentName?: string | null;
+  fatherName?: string | null;
+  fatherMobile?: string | null;
+  motherMobile?: string | null;
+  email: string;
+  course: string;
+  city?: string | null;
+  feeOffered?: number | null;
+  status: string;
+  howDidYouHear?: string | null;
+  enquiryStatus?: string | null;
+  dateOfBirth?: string | Date | null;
+  age: number;
+  state?: string | null;
+  residentialAddress?: string | null;
+  permanentAddress?: string | null;
+  fatherEmail?: string | null;
+  motherName?: string | null;
+  motherEmail?: string | null;
+};
+
 export default async function EnrollmentsPage() {
   const session = await requireSession();
   if (!canAccess(session.role, "enrollments")) {
     return <AccessDenied moduleName="enrollments" />;
   }
 
-  const enrollments = await prisma.enrollment.findMany({ orderBy: { createdAt: "desc" } });
+  const enrollments = (await prisma.enrollment.findMany({ orderBy: { createdAt: "desc" } })) as EnrollmentRow[];
 
   return (
     <div className={styles.wrap}>
@@ -32,7 +57,7 @@ export default async function EnrollmentsPage() {
             </tr>
           </thead>
           <tbody>
-            {enrollments.map((enrollment: any) => (
+            {enrollments.map((enrollment) => (
               <tr key={enrollment.id}>
                 <td>{enrollment.name}</td>
                 <td>{enrollment.className ?? "-"}</td>

@@ -2,9 +2,11 @@ import { ReactNode } from "react";
 import { requireSession } from "@/lib/auth";
 import { AppShell } from "@/components/AppShell";
 import { prisma } from "@/lib/prisma";
+import { consumeFlashMessage } from "@/lib/flash";
 
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
   const session = await requireSession();
+  const flash = await consumeFlashMessage();
   const userId = Number(session.sub);
 
   let profileImage: string | null = null;
@@ -27,7 +29,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   }
 
   return (
-    <AppShell role={session.role} name={session.name} profileImage={profileImage}>
+    <AppShell role={session.role} name={session.name} profileImage={profileImage} flash={flash}>
       {children}
     </AppShell>
   );

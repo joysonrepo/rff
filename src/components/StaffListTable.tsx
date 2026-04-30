@@ -6,8 +6,13 @@ import styles from "@/app/(protected)/module.module.css";
 import { Staff } from "@/lib/types";
 import { deactivateStaff } from "@/lib/actions";
 
+type StaffListRow = Staff & {
+  accountRole?: string;
+  isProfileManaged?: boolean;
+};
+
 type StaffListTableProps = {
-  staff: Staff[];
+  staff: StaffListRow[];
   showViewAction?: boolean;
   showManageActions?: boolean;
 };
@@ -51,7 +56,7 @@ export function StaffListTable({ staff, showViewAction = true, showManageActions
                           <span className={styles.actionButtonIcon}>View</span>
                         </button>
                       )}
-                      {showManageActions && (
+                      {showManageActions && employee.isProfileManaged !== false && (
                         <>
                           <Link href={`/staff-list/edit/${employee.id}`} className={styles.iconAction} aria-label="Edit staff" title="Edit staff">
                             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
@@ -67,6 +72,11 @@ export function StaffListTable({ staff, showViewAction = true, showManageActions
                             </button>
                           </form>
                         </>
+                      )}
+                      {showManageActions && employee.isProfileManaged === false && (
+                        <span title="This account has no staff profile to edit." style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                          View only
+                        </span>
                       )}
                     </div>
                   </td>
@@ -96,6 +106,7 @@ export function StaffListTable({ staff, showViewAction = true, showManageActions
             <div className={styles.profileGrid}>
               <div><strong>Name:</strong> {selected.name}</div>
               <div><strong>Role:</strong> {selected.role}</div>
+              <div><strong>Account Role:</strong> {selected.accountRole ?? "-"}</div>
               <div><strong>Salary:</strong> {selected.salary != null ? `₹${selected.salary}` : "-"}</div>
               <div><strong>Date of Birth:</strong> {selected.dateOfBirth ? new Date(selected.dateOfBirth).toLocaleDateString() : "-"}</div>
               <div><strong>Email:</strong> {selected.email ?? "-"}</div>

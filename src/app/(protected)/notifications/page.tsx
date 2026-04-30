@@ -5,6 +5,17 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "../module.module.css";
 
+type NotificationRow = {
+  id: number;
+  title: string;
+  message: string;
+  status?: string | null;
+  createdAt: string | Date;
+  user: {
+    name: string;
+  };
+};
+
 function formatNotificationStatus(status: unknown): string {
   if (status === "PENDING") {
     return "Pending";
@@ -21,11 +32,11 @@ export default async function NotificationsPage() {
     return <AccessDenied moduleName="notifications" />;
   }
 
-  const notifications = await prisma.notification.findMany({
+  const notifications = (await prisma.notification.findMany({
     where: session.role === "FOUNDER" ? {} : { userId: Number(session.sub) },
     orderBy: { createdAt: "desc" },
     include: { user: true },
-  });
+  })) as unknown as NotificationRow[];
 
   return (
     <div className={styles.wrap}>
@@ -65,7 +76,7 @@ export default async function NotificationsPage() {
             </tr>
           </thead>
           <tbody>
-            {notifications.map((item: any) => (
+            {notifications.map((item) => (
               <tr key={item.id}>
                 <td>{item.title}</td>
                 <td>{item.message}</td>

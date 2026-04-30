@@ -1,0 +1,238 @@
+.wrap {
+  display: grid;
+  gap: 1rem;
+}
+
+.hero {
+  border-radius: 16px;
+  border: 1px solid #d7e5f1;
+  background: radial-gradient(circle at 0% 0%, #ffe4b3 0%, #fff4de 38%, #f4fbff 100%);
+  padding: 1rem;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #0f2e4f;
+}
+
+.heroSub {
+  margin-top: 0.35rem;
+  color: #365776;
+}
+
+.tabRow {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.tab,
+.tabActive {
+  border: 1px solid #bfccde;
+  background: #ffffff;
+  color: #173b60;
+  border-radius: 999px;
+  padding: 0.48rem 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tabActive {
+  background: linear-gradient(90deg, #2f8ec8, #14a9d8);
+  border-color: #1b8dc2;
+  color: #ffffff;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.panelTitle {
+  margin: 0 0 0.8rem;
+  color: #1f2937;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  grid-column: span 12;
+}
+
+.third {
+  grid-column: span 4;
+}
+
+.full {
+  grid-column: span 12;
+}
+
+.label {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.input,
+.textarea,
+.file {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.62rem 0.75rem;
+  font: inherit;
+  background: #ffffff;
+}
+
+.textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.actionRow {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.saveBtn,
+.clearBtn,
+.editBtn,
+.cancelBtn {
+  border: 0;
+  border-radius: 10px;
+  padding: 0.58rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.saveBtn {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.clearBtn {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.editBtn {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.cancelBtn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.manageList {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.manageItem {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.manageMeta {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.newsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.cardImage {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  background: #e5edf5;
+}
+
+.cardBody {
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #132f4c;
+}
+
+.cardSummary {
+  color: #445b74;
+  font-weight: 600;
+}
+
+.cardContent {
+  color: #334155;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.cardMeta {
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.empty {
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+  color: #475569;
+}
+
+@media (max-width: 980px) {
+  .third {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 680px) {
+  .third {
+    grid-column: span 12;
+  }
+
+  .hero {
+    padding: 0.85rem;
+  }
+
+  .panel {
+    padding: 0.85rem;
+  }
+}

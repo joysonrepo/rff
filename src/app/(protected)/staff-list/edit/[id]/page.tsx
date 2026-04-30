@@ -6,6 +6,21 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/(protected)/module.module.css";
 
+const roleOptions = [
+  { value: "BOARD_DIRECTOR", label: "Board Director" },
+  { value: "ADMIN_MANAGER", label: "Admin Manager" },
+  { value: "HR", label: "HR" },
+  { value: "ACCOUNTS", label: "Accounts" },
+  { value: "PRINCIPAL", label: "Principal" },
+  { value: "TEACHER", label: "Teacher" },
+  { value: "STAFF", label: "Staff" },
+  { value: "PARENT", label: "Parent" },
+];
+
+function roleToOptionValue(role: string): string {
+  return role.trim().toUpperCase().replace(/\s+/g, "_");
+}
+
 function toDateInputValue(value: unknown): string {
   if (!value) return "";
 
@@ -50,6 +65,7 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
 
   const dobValue = toDateInputValue(staff.dateOfBirth);
   const joiningValue = toDateInputValue(staff.joiningDate);
+  const selectedRole = roleToOptionValue(staff.role ?? "");
 
   return (
     <div className={styles.wrap}>
@@ -64,7 +80,16 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
           <input type="hidden" name="staffId" value={staff.id} />
           <input className={styles.input} name="name" defaultValue={staff.name ?? ""} placeholder="Name" required />
           <ValidatedProfileImageInput className={styles.input} />
-          <input className={styles.input} name="role" defaultValue={staff.role ?? ""} placeholder="Role" required />
+          <select className={styles.select} name="role" defaultValue={selectedRole || ""} required>
+            <option value="" disabled>
+              Select user role
+            </option>
+            {roleOptions.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
           <input className={styles.input} name="salary" type="number" min={0} step="0.01" defaultValue={staff.salary ?? ""} placeholder="Salary" />
           <input className={styles.input} name="dateOfBirth" type="date" defaultValue={dobValue} />
           <input className={styles.input} name="email" type="email" defaultValue={staff.email ?? ""} placeholder="Email" />

@@ -7,7 +7,9 @@ import {
   Enrollment,
   Event,
   Fee,
+  Homework,
   Mark,
+  News,
   Notification,
   Parent,
   Staff,
@@ -163,6 +165,25 @@ async function includeNotificationsUser(items: Notification[]): Promise<Array<No
     .filter((item): item is Notification & { user: User } => Boolean(item.user));
 }
 
+async function includeHomeworkRelations(
+  items: Homework[],
+): Promise<Array<Homework & { student: Student; createdBy: User }>> {
+  const [students, users] = await Promise.all([listCollection<Student>("students"), listCollection<User>("users")]);
+  const studentMap = new Map(students.map((student) => [student.id, student]));
+  const userMap = new Map(users.map((user) => [user.id, user]));
+  return items
+    .map((item) => ({ ...item, student: studentMap.get(item.studentId), createdBy: userMap.get(item.createdById) }))
+    .filter((item): item is Homework & { student: Student; createdBy: User } => Boolean(item.student && item.createdBy));
+}
+
+async function includeNewsCreator(items: News[]): Promise<Array<News & { createdBy: User }>> {
+  const users = await listCollection<User>("users");
+  const userMap = new Map(users.map((user) => [user.id, user]));
+  return items
+    .map((item) => ({ ...item, createdBy: userMap.get(item.createdById) }))
+    .filter((item): item is News & { createdBy: User } => Boolean(item.createdBy));
+}
+
 function applySelect<T extends Record<string, unknown>>(items: T[], select?: Record<string, boolean>): T[] {
   if (!select) return items;
   const keys = Object.entries(select)
@@ -175,7 +196,7 @@ function applySelect<T extends Record<string, unknown>>(items: T[], select?: Rec
   });
 }
 
-const firestorePrisma: any = {
+const firestorePrisma = {
   user: {
     async findUnique(args: { where: WhereClause }) {
       return findUniqueByField<User>("users", args.where);
@@ -187,6 +208,9 @@ const firestorePrisma: any = {
     },
     async create(args: { data: Omit<User, "id" | "createdAt" | "updatedAt"> }) {
       return createWithId<User>("users", { ...args.data, createdAt: nowIso(), updatedAt: nowIso() });
+    },
+    async update(args: { where: { id: number }; data: Partial<User> }) {
+      return updateById<User>("users", args.where.id, { ...args.data, updatedAt: nowIso() });
     },
     async delete(args: { where: { id: number } }) {
       await deleteById("users", args.where.id);
@@ -287,6 +311,44 @@ const firestorePrisma: any = {
         return includeMarksStudent(rows);
       }
       return rows;
+    },
+  },
+  homework: {
+    async create(args: { data: Omit<Homework, "id" | "createdAt" | "updatedAt"> }) {
+      return createWithId<Homework>("homeworks", { ...args.data, createdAt: nowIso(), updatedAt: nowIso() });
+    },
+    async findMany(args?: {
+      include?: { student?: boolean; createdBy?: boolean };
+      orderBy?: Record<string, SortDirection>;
+      where?: WhereClause;
+    }) {
+      const rows = applyOrder(applyWhere(await listCollection<Homework>("homeworks"), args?.where), args?.orderBy);
+      if (args?.include?.student || args?.include?.createdBy) {
+        return includeHomeworkRelations(rows);
+      }
+      return rows;
+    },
+  },
+  news: {
+    async create(args: { data: Omit<News, "id" | "createdAt" | "updatedAt"> }) {
+      return createWithId<News>("news", { ...args.data, createdAt: nowIso(), updatedAt: nowIso() });
+    },
+    async update(args: { where: { id: number }; data: Partial<News> }) {
+      return updateById<News>("news", args.where.id, { ...args.data, updatedAt: nowIso() });
+    },
+    async findMany(args?: {
+      include?: { createdBy?: boolean };
+      orderBy?: Record<string, SortDirection>;
+      where?: WhereClause;
+    }) {
+      const rows = applyOrder(applyWhere(await listCollection<News>("news"), args?.where), args?.orderBy);
+      if (args?.include?.createdBy) {
+        return includeNewsCreator(rows);
+      }
+      return rows;
+    },
+    async findUnique(args: { where: WhereClause }) {
+      return findUniqueByField<News>("news", args.where);
     },
   },
   fee: {
@@ -399,4 +461,4 @@ const firestorePrisma: any = {
   },
 };
 
-export const prisma: any = hasFirebaseAdminConfig() ? firestorePrisma : getSqlitePrismaClient();
+export const prisma = (hasFirebaseAdminConfig() ? firestorePrisma : getSqlitePrismaClient()) as typeof firestorePrisma;

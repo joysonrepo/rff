@@ -3,13 +3,17 @@
 import { useState, useRef, useEffect, ReactNode } from 'react';
 import styles from './AppShell.module.css';
 import { MenuToggleButton } from './MobileMenuToggle';
+import { FlashToast } from './FlashToast';
+
+type FlashProp = { type: 'success' | 'error'; message: string } | null | undefined;
 
 type AppShellClientProps = {
   sidebarContent: ReactNode;
   children: ReactNode;
+  flash?: FlashProp;
 };
 
-export function AppShellClient({ sidebarContent, children }: AppShellClientProps) {
+export function AppShellClient({ sidebarContent, children, flash }: AppShellClientProps) {
   const [isOpen, setIsOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -40,6 +44,7 @@ export function AppShellClient({ sidebarContent, children }: AppShellClientProps
         {sidebarContent}
       </aside>
 
+      {flash && <FlashToast type={flash.type} message={flash.message} />}
       {children}
     </div>
   );

@@ -3,7 +3,15 @@ import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { StudentListTable } from "@/components/StudentListTable";
+import { Student } from "@/lib/types";
 import styles from "../module.module.css";
+
+type StudentListRow = Student & {
+  parent?: {
+    id: number;
+    name: string;
+  } | null;
+};
 
 function normalizeDateValue(value: unknown): string | null {
   if (!value) return null;
@@ -23,7 +31,7 @@ function normalizeDateValue(value: unknown): string | null {
   return null;
 }
 
-function normalizeStudents(students: any[]): any[] {
+function normalizeStudents(students: StudentListRow[]): StudentListRow[] {
   return students.map((student) => ({
     ...student,
     dateOfBirth: normalizeDateValue(student.dateOfBirth),
@@ -36,15 +44,15 @@ export default async function StudentListPage() {
     return <AccessDenied moduleName="students" />;
   }
 
-  let students = await prisma.student.findMany({ include: { parent: true }, where: { status: "ACTIVE" }, orderBy: { id: "desc" } });
+  let students = (await prisma.student.findMany({ include: { parent: true }, where: { status: "ACTIVE" }, orderBy: { id: "desc" } })) as StudentListRow[];
 
   if (session.role === "PARENT") {
     const parent = await prisma.parent.findUnique({ where: { userId: Number(session.sub) } });
-    students = students.filter((student: any) => student.parentId === parent?.id);
+    students = students.filter((student) => student.parentId === parent?.id);
   }
 
   if (session.role === "STUDENT") {
-    students = students.filter((student: any) => student.userId === Number(session.sub));
+    students = students.filter((student) => student.userId === Number(session.sub));
   }
 
   students = normalizeStudents(students);

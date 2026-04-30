@@ -5,13 +5,21 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "../module.module.css";
 
+type EventRow = {
+  id: number;
+  name: string;
+  date: string | Date;
+  description: string;
+  registrations: number;
+};
+
 export default async function EventsPage() {
   const session = await requireSession();
   if (!canAccess(session.role, "events")) {
     return <AccessDenied moduleName="events" />;
   }
 
-  const events = await prisma.event.findMany({ orderBy: { date: "asc" } });
+  const events = (await prisma.event.findMany({ orderBy: { date: "asc" } })) as EventRow[];
 
   return (
     <div className={styles.wrap}>
@@ -45,7 +53,7 @@ export default async function EventsPage() {
             </tr>
           </thead>
           <tbody>
-            {events.map((event: any) => (
+            {events.map((event) => (
               <tr key={event.id}>
                 <td>{event.name}</td>
                 <td>{new Date(event.date).toLocaleDateString()}</td>

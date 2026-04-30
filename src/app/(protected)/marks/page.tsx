@@ -5,6 +5,26 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "../module.module.css";
 
+type MarkStudentRow = {
+  id: number;
+  name: string;
+  userId?: number | null;
+  parentId?: number | null;
+};
+
+type MarkRow = {
+  id: number;
+  subject: string;
+  marks: number;
+  examType?: string | null;
+  student: MarkStudentRow;
+};
+
+type StudentOptionRow = {
+  id: number;
+  name: string;
+};
+
 export default async function MarksPage() {
   const session = await requireSession();
   if (!canAccess(session.role, "marks")) {
@@ -16,15 +36,18 @@ export default async function MarksPage() {
     prisma.mark.findMany({ include: { student: true }, orderBy: { id: "desc" } }),
   ]);
 
-  let visibleMarks = marks;
+  const typedStudents = students as StudentOptionRow[];
+  const typedMarks = marks as unknown as MarkRow[];
+
+  let visibleMarks = typedMarks;
 
   if (session.role === "STUDENT") {
-    visibleMarks = marks.filter((item: any) => item.student.userId === Number(session.sub));
+    visibleMarks = typedMarks.filter((item) => item.student.userId === Number(session.sub));
   }
 
   if (session.role === "PARENT") {
     const parent = await prisma.parent.findUnique({ where: { userId: Number(session.sub) } });
-    visibleMarks = marks.filter((item: any) => item.student.parentId === parent?.id);
+    visibleMarks = typedMarks.filter((item) => item.student.parentId === parent?.id);
   }
 
   return (
@@ -39,7 +62,7 @@ export default async function MarksPage() {
               <form className={styles.formGrid} action={addMark}>
                 <select className={styles.select} name="studentId" required>
                   <option value="">Select student</option>
-                  {students.map((student: any) => (
+                  {typedStudents.map((student) => (
                     <option key={student.id} value={student.id}>
                       {student.name}
                     </option>
@@ -67,7 +90,7 @@ export default async function MarksPage() {
             </tr>
           </thead>
           <tbody>
-            {visibleMarks.map((item: any) => (
+            {visibleMarks.map((item) => (
               <tr key={item.id}>
                 <td>{item.student.name}</td>
                 <td>{item.subject}</td>

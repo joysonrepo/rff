@@ -8,6 +8,17 @@ import { StaffListTable } from "@/components/StaffListTable";
 import { ValidatedProfileImageInput } from "@/components/ValidatedProfileImageInput";
 import styles from "../module.module.css";
 
+const addStaffRoleOptions = [
+  { value: "BOARD_DIRECTOR", label: "Board Director" },
+  { value: "ADMIN_MANAGER", label: "Admin Manager" },
+  { value: "HR", label: "HR" },
+  { value: "ACCOUNTS", label: "Accounts" },
+  { value: "PRINCIPAL", label: "Principal" },
+  { value: "TEACHER", label: "Teacher" },
+  { value: "STAFF", label: "Staff" },
+  { value: "PARENT", label: "Parent" },
+];
+
 function normalizeDateValue(value: unknown): string | null {
   if (!value) return null;
   if (typeof value === "string") return value;
@@ -55,7 +66,16 @@ export default async function StaffPage() {
               <form action={addStaff} className={styles.formGrid}>
                 <input className={styles.input} name="name" placeholder="Name" required />
                 <ValidatedProfileImageInput className={styles.input} />
-                <input className={styles.input} name="role" placeholder="Role" required />
+                <select className={styles.select} name="role" defaultValue="" required>
+                  <option value="" disabled>
+                    Select user role
+                  </option>
+                  {addStaffRoleOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
                 <input className={styles.input} name="salary" type="number" min={0} step="0.01" placeholder="Salary" />
                 <input className={styles.input} name="username" placeholder="Staff username" required />
                 <input className={styles.input} name="password" type="password" placeholder="Staff password" required />

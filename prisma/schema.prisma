@@ -17,6 +17,8 @@ model User {
   updatedAt     DateTime       @updatedAt
   markedLogs    Attendance[]   @relation("AttendanceMarker")
   attendanceLog Attendance[]   @relation("AttendanceUser")
+  postedHomeworks Homework[]   @relation("HomeworkCreator")
+  postedNews    News[]         @relation("NewsCreator")
   notifications Notification[]
   parent        Parent?
   staff         Staff?
@@ -64,10 +66,44 @@ model Student {
   updatedAt          DateTime     @updatedAt
   attendance         Attendance[]
   fees               Fee[]
+  homeworks          Homework[]
   marks              Mark[]
   batch              Batch?       @relation(fields: [batchId], references: [id])
   parent             Parent?      @relation(fields: [parentId], references: [id])
   user               User?        @relation(fields: [userId], references: [id])
+}
+
+model Homework {
+  id             Int      @id @default(autoincrement())
+  subjectName    String
+  sectionName    String
+  className      String
+  homeworkDate   DateTime
+  submissionDate DateTime
+  description    String
+  attachmentFile String?
+  studentId      Int
+  createdById    Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      User     @relation("HomeworkCreator", fields: [createdById], references: [id])
+  student        Student  @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, homeworkDate])
+}
+
+model News {
+  id          Int      @id @default(autoincrement())
+  title       String
+  summary     String
+  content     String
+  imageFile   String?
+  createdById Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User     @relation("NewsCreator", fields: [createdById], references: [id])
+
+  @@index([createdAt])
 }
 
 model Teacher {

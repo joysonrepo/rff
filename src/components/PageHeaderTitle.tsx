@@ -10,6 +10,8 @@ const titleByPath: Record<string, string> = {
   "/staff": "Staff & HR Management",
   "/staff-list": "Staff List",
   "/attendance": "Attendance",
+  "/homework": "Homework",
+  "/news": "Newslet",
   "/fees": "Fees Management",
   "/reports": "Reports & Analytics",
   "/events": "Events & Camps",

@@ -1,15 +1,41 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
+import { setFlashMessage } from "@/lib/flash";
 import bcrypt from "bcryptjs";
 import { AttendanceStatus, AttendanceTargetType, CourseType, EnrollmentStatus, FeeStatus, Role } from "@/lib/types";
 import { sendMonthlyFeeDelayReminders } from "@/lib/feeReminders";
 
 const FIRESTORE_SAFE_DATA_URL_MAX_BYTES = 900 * 1024;
 const PROFILE_IMAGE_MAX_BYTES = 700 * 1024;
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  return "Action failed. Please try again.";
+}
+
+async function redirectToReferrer(fallbackPath: string): Promise<never> {
+  const headerStore = await headers();
+  const referrer = headerStore.get("referer");
+
+  if (referrer) {
+    try {
+      const refUrl = new URL(referrer);
+      redirect(`${refUrl.pathname}${refUrl.search}`);
+    } catch {
+      redirect(fallbackPath);
+    }
+  }
+
+  redirect(fallbackPath);
+}
 
 function ensureAccess(moduleName: Parameters<typeof canAccess>[1], role: Role): void {
   if (!canAccess(role, moduleName)) {
@@ -25,6 +51,37 @@ function getOptionalString(formData: FormData, key: string): string | null {
 function normalizeUsernameToEmail(value: string): string {
   const normalized = value.trim().toLowerCase();
   return normalized.includes("@") ? normalized : `${normalized}@rff.local`;
+}
+
+function mapRoleInputToUserRole(value: string): Role | null {
+  const normalized = value.trim().toUpperCase().replace(/\s+/g, "_");
+  const roleMap: Record<string, Role> = {
+    BOARD_DIRECTOR: "BOARD_DIRECTOR",
+    ADMIN_MANAGER: "ADMIN_MANAGER",
+    HR: "HR",
+    ACCOUNTS: "ACCOUNTS",
+    PRINCIPAL: "PRINCIPAL",
+    TEACHER: "TEACHER",
+    STAFF: "STAFF",
+    PARENT: "PARENT",
+  };
+  return roleMap[normalized] ?? null;
+}
+
+function toRoleLabel(role: Role): string {
+  const labels: Record<Role, string> = {
+    FOUNDER: "Founder",
+    BOARD_DIRECTOR: "Board Director",
+    ADMIN_MANAGER: "Admin Manager",
+    HR: "HR",
+    ACCOUNTS: "Accounts",
+    PRINCIPAL: "Principal",
+    TEACHER: "Teacher",
+    STAFF: "Staff",
+    PARENT: "Parent",
+    STUDENT: "Student",
+  };
+  return labels[role];
 }
 
 async function getOptionalFileDataUrl(formData: FormData, key: string, maxMb = 5): Promise<string | null> {
@@ -121,7 +178,7 @@ export async function addStudent(formData: FormData) {
       className,
       howDidYouHear,
       enquiryStatus,
-      dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
+      dateOfBirth: dateOfBirthRaw || null,
       age,
       city,
       state,
@@ -145,69 +202,78 @@ export async function addStudent(formData: FormData) {
 }
 
 export async function addStaff(formData: FormData) {
-  const session = await requireSession();
-  ensureAccess("staff", session.role);
+  try {
+    const session = await requireSession();
+    ensureAccess("staff", session.role);
 
-  const name = String(formData.get("name") ?? "").trim();
-  const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
-  const role = String(formData.get("role") ?? "").trim();
-  const salaryRaw = getOptionalString(formData, "salary");
-  const username = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "").trim();
-  const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
-  const email = getOptionalString(formData, "email");
-  const contactNumber = getOptionalString(formData, "contactNumber");
-  const emergencyContact = getOptionalString(formData, "emergencyContact");
-  const address = getOptionalString(formData, "address");
-  const city = getOptionalString(formData, "city");
-  const state = getOptionalString(formData, "state");
-  const qualification = getOptionalString(formData, "qualification");
-  const experienceYearsRaw = getOptionalString(formData, "experienceYears");
-  const joiningDateRaw = getOptionalString(formData, "joiningDate");
+    const name = String(formData.get("name") ?? "").trim();
+    const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
+    const roleInput = String(formData.get("role") ?? "").trim();
+    const role = mapRoleInputToUserRole(roleInput);
+    const salaryRaw = getOptionalString(formData, "salary");
+    const username = String(formData.get("username") ?? "").trim();
+    const password = String(formData.get("password") ?? "").trim();
+    const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
+    const email = getOptionalString(formData, "email");
+    const contactNumber = getOptionalString(formData, "contactNumber");
+    const emergencyContact = getOptionalString(formData, "emergencyContact");
+    const address = getOptionalString(formData, "address");
+    const city = getOptionalString(formData, "city");
+    const state = getOptionalString(formData, "state");
+    const qualification = getOptionalString(formData, "qualification");
+    const experienceYearsRaw = getOptionalString(formData, "experienceYears");
+    const joiningDateRaw = getOptionalString(formData, "joiningDate");
 
-  if (!name || !role || !username || !password) {
-    throw new Error("Name, staff role, username and password are required.");
+    if (!name || !role || !username || !password) {
+      throw new Error("Name, staff role, username and password are required.");
+    }
+
+    const loginEmail = normalizeUsernameToEmail(username);
+    const existingUser = await prisma.user.findUnique({ where: { email: loginEmail } });
+    if (existingUser) {
+      throw new Error("Username already exists. Please use a different username.");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const createdUser = await prisma.user.create({
+      data: {
+        name,
+        email: loginEmail,
+        password: hashedPassword,
+        role,
+      },
+    });
+
+    await prisma.staff.create({
+      data: {
+        name,
+        status: "ACTIVE",
+        profileImage,
+        role: toRoleLabel(role),
+        salary: salaryRaw ? Number(salaryRaw) : null,
+        dateOfBirth: dateOfBirthRaw || null,
+        email,
+        contactNumber,
+        emergencyContact,
+        address,
+        city,
+        state,
+        qualification,
+        experienceYears: experienceYearsRaw ? Number(experienceYearsRaw) : null,
+        joiningDate: joiningDateRaw || null,
+        userId: createdUser.id,
+      },
+    });
+
+    revalidatePath("/staff");
+    revalidatePath("/staff-list");
+    revalidatePath("/settings");
+    await setFlashMessage("success", "Staff details saved successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  const loginEmail = normalizeUsernameToEmail(username);
-  const existingUser = await prisma.user.findUnique({ where: { email: loginEmail } });
-  if (existingUser) {
-    throw new Error("Username already exists. Please use a different username.");
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-  const createdUser = await prisma.user.create({
-    data: {
-      name,
-      email: loginEmail,
-      password: hashedPassword,
-      role: "STAFF",
-    },
-  });
-
-  await prisma.staff.create({
-    data: {
-      name,
-      status: "ACTIVE",
-      profileImage,
-      role,
-      salary: salaryRaw ? Number(salaryRaw) : null,
-      dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
-      email,
-      contactNumber,
-      emergencyContact,
-      address,
-      city,
-      state,
-      qualification,
-      experienceYears: experienceYearsRaw ? Number(experienceYearsRaw) : null,
-      joiningDate: joiningDateRaw ? new Date(joiningDateRaw) : null,
-      userId: createdUser.id,
-    },
-  });
-  revalidatePath("/staff");
-  revalidatePath("/staff-list");
-  revalidatePath("/settings");
+  await redirectToReferrer("/staff");
 }
 
 export async function addAttendance(formData: FormData) {
@@ -256,7 +322,7 @@ export async function addAttendance(formData: FormData) {
     data: {
       userId,
       studentId: targetType === "STUDENT" ? studentId : null,
-      date: new Date(dateRaw),
+      date: new Date(dateRaw).toISOString(),
       status,
       targetType,
       notes,
@@ -279,7 +345,7 @@ export async function addFee(formData: FormData) {
   const modeOfPayment = String(formData.get("modeOfPayment") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const dateOfPaymentRaw = String(formData.get("dateOfPayment") ?? "").trim();
-  const dateOfPayment = dateOfPaymentRaw ? new Date(dateOfPaymentRaw) : null;
+  const dateOfPayment = dateOfPaymentRaw || null;
   const invoiceFile = await getOptionalFileDataUrl(formData, "invoiceFile", 5);
 
   if (!studentId || !amount) {
@@ -300,7 +366,7 @@ export async function addFee(formData: FormData) {
       notes,
       invoiceFile,
       receiptNo,
-      paidOn: status === "PAID" || status === "PARTIAL" ? new Date() : null,
+      paidOn: status === "PAID" || status === "PARTIAL" ? new Date().toISOString() : null,
     },
   });
 
@@ -312,26 +378,33 @@ export async function addFee(formData: FormData) {
 }
 
 export async function addEvent(formData: FormData) {
-  const session = await requireSession();
-  ensureAccess("events", session.role);
+  try {
+    const session = await requireSession();
+    ensureAccess("events", session.role);
 
-  const name = String(formData.get("name") ?? "").trim();
-  const date = String(formData.get("date") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+    const name = String(formData.get("name") ?? "").trim();
+    const date = String(formData.get("date") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
 
-  if (!name || !date || !description) {
-    throw new Error("Name, date, and description are required.");
+    if (!name || !date || !description) {
+      throw new Error("Name, date, and description are required.");
+    }
+
+    await prisma.event.create({
+      data: {
+        name,
+        date: new Date(date).toISOString(),
+        description,
+      },
+    });
+
+    revalidatePath("/events");
+    await setFlashMessage("success", "Event created successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  await prisma.event.create({
-    data: {
-      name,
-      date: new Date(date),
-      description,
-    },
-  });
-
-  revalidatePath("/events");
+  await redirectToReferrer("/events");
 }
 
 export async function addEnrollment(formData: FormData) {
@@ -366,8 +439,8 @@ export async function addEnrollment(formData: FormData) {
       className,
       howDidYouHear,
       enquiryStatus,
-      dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
-      parentName,
+      dateOfBirth: dateOfBirthRaw || null,
+      parentName: parentName ?? undefined,
       email,
       age,
       city,
@@ -452,19 +525,26 @@ export async function deactivateStudent(formData: FormData) {
 }
 
 export async function deactivateStaff(formData: FormData) {
-  const session = await requireSession();
-  ensureAccess("staff", session.role);
+  try {
+    const session = await requireSession();
+    ensureAccess("staff", session.role);
 
-  const staffId = Number(formData.get("staffId") ?? 0);
-  if (!staffId) {
-    throw new Error("Staff id is required.");
+    const staffId = Number(formData.get("staffId") ?? 0);
+    if (!staffId) {
+      throw new Error("Staff id is required.");
+    }
+
+    await prisma.staff.update({ where: { id: staffId }, data: { status: "INACTIVE" } });
+
+    revalidatePath("/staff");
+    revalidatePath("/staff-list");
+    revalidatePath("/dashboard");
+    await setFlashMessage("success", "Staff record updated successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  await prisma.staff.update({ where: { id: staffId }, data: { status: "INACTIVE" } });
-
-  revalidatePath("/staff");
-  revalidatePath("/staff-list");
-  revalidatePath("/dashboard");
+  await redirectToReferrer("/staff-list");
 }
 
 export async function updateStudent(formData: FormData) {
@@ -529,54 +609,77 @@ export async function updateStudent(formData: FormData) {
 }
 
 export async function updateStaff(formData: FormData) {
-  const session = await requireSession();
-  ensureAccess("staff", session.role);
+  try {
+    const session = await requireSession();
+    ensureAccess("staff", session.role);
 
-  const staffId = Number(formData.get("staffId") ?? 0);
-  const name = String(formData.get("name") ?? "").trim();
-  const role = String(formData.get("role") ?? "").trim();
-  const salaryRaw = getOptionalString(formData, "salary");
-  const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
-  const email = getOptionalString(formData, "email");
-  const contactNumber = getOptionalString(formData, "contactNumber");
-  const emergencyContact = getOptionalString(formData, "emergencyContact");
-  const address = getOptionalString(formData, "address");
-  const city = getOptionalString(formData, "city");
-  const state = getOptionalString(formData, "state");
-  const qualification = getOptionalString(formData, "qualification");
-  const experienceYearsRaw = getOptionalString(formData, "experienceYears");
-  const joiningDateRaw = getOptionalString(formData, "joiningDate");
-  const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
+    const staffId = Number(formData.get("staffId") ?? 0);
+    const name = String(formData.get("name") ?? "").trim();
+    const roleInput = String(formData.get("role") ?? "").trim();
+    const role = mapRoleInputToUserRole(roleInput);
+    const salaryRaw = getOptionalString(formData, "salary");
+    const dateOfBirthRaw = getOptionalString(formData, "dateOfBirth");
+    const email = getOptionalString(formData, "email");
+    const contactNumber = getOptionalString(formData, "contactNumber");
+    const emergencyContact = getOptionalString(formData, "emergencyContact");
+    const address = getOptionalString(formData, "address");
+    const city = getOptionalString(formData, "city");
+    const state = getOptionalString(formData, "state");
+    const qualification = getOptionalString(formData, "qualification");
+    const experienceYearsRaw = getOptionalString(formData, "experienceYears");
+    const joiningDateRaw = getOptionalString(formData, "joiningDate");
+    const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
 
-  if (!staffId || !name || !role) {
-    throw new Error("Staff id, name and role are required.");
+    if (!staffId || !name || !role) {
+      throw new Error("Staff id, name and role are required.");
+    }
+
+    const currentStaff = await prisma.staff.findUnique({ where: { id: staffId } });
+    if (!currentStaff) {
+      throw new Error("Staff not found.");
+    }
+
+    const data: Record<string, unknown> = {
+      name,
+      role: toRoleLabel(role),
+      salary: salaryRaw ? Number(salaryRaw) : null,
+      dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
+      email,
+      contactNumber,
+      emergencyContact,
+      address,
+      city,
+      state,
+      qualification,
+      experienceYears: experienceYearsRaw ? Number(experienceYearsRaw) : null,
+      joiningDate: joiningDateRaw ? new Date(joiningDateRaw) : null,
+    };
+
+    if (profileImage) {
+      data.profileImage = profileImage;
+    }
+
+    await prisma.staff.update({ where: { id: staffId }, data });
+
+    if (currentStaff.userId) {
+      await prisma.user.update({
+        where: { id: currentStaff.userId },
+        data: {
+          name,
+          role,
+        },
+      });
+    }
+
+    revalidatePath("/staff");
+    revalidatePath("/staff-list");
+    revalidatePath("/dashboard");
+    await setFlashMessage("success", "Staff details saved successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  const data: Record<string, unknown> = {
-    name,
-    role,
-    salary: salaryRaw ? Number(salaryRaw) : null,
-    dateOfBirth: dateOfBirthRaw ? new Date(dateOfBirthRaw) : null,
-    email,
-    contactNumber,
-    emergencyContact,
-    address,
-    city,
-    state,
-    qualification,
-    experienceYears: experienceYearsRaw ? Number(experienceYearsRaw) : null,
-    joiningDate: joiningDateRaw ? new Date(joiningDateRaw) : null,
-  };
-
-  if (profileImage) {
-    data.profileImage = profileImage;
-  }
-
-  await prisma.staff.update({ where: { id: staffId }, data });
-
-  revalidatePath("/staff");
-  revalidatePath("/staff-list");
-  revalidatePath("/dashboard");
+  await redirectToReferrer("/staff-list");
 }
 
 export async function addCourseBatch(formData: FormData) {
@@ -599,92 +702,257 @@ export async function addCourseBatch(formData: FormData) {
 }
 
 export async function addMark(formData: FormData) {
-  const session = await requireSession();
-  ensureAccess("marks", session.role);
+  try {
+    const session = await requireSession();
+    ensureAccess("marks", session.role);
 
-  const studentId = Number(formData.get("studentId") ?? 0);
-  const subject = String(formData.get("subject") ?? "").trim();
-  const marks = Number(formData.get("marks") ?? 0);
-  const examType = String(formData.get("examType") ?? "").trim();
+    const studentId = Number(formData.get("studentId") ?? 0);
+    const subject = String(formData.get("subject") ?? "").trim();
+    const marks = Number(formData.get("marks") ?? 0);
+    const examType = String(formData.get("examType") ?? "").trim();
 
-  if (!studentId || !subject || Number.isNaN(marks)) {
-    throw new Error("Student, subject and marks are required.");
+    if (!studentId || !subject || Number.isNaN(marks)) {
+      throw new Error("Student, subject and marks are required.");
+    }
+
+    await prisma.mark.create({
+      data: {
+        studentId,
+        subject,
+        marks,
+        examType,
+      },
+    });
+
+    revalidatePath("/marks");
+    revalidatePath("/reports");
+    await setFlashMessage("success", "Marks saved successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  await prisma.mark.create({
-    data: {
-      studentId,
-      subject,
-      marks,
-      examType,
-    },
-  });
+  await redirectToReferrer("/marks");
+}
 
-  revalidatePath("/marks");
-  revalidatePath("/reports");
+export async function addHomework(formData: FormData) {
+  try {
+    const session = await requireSession();
+    ensureAccess("homework", session.role);
+
+    if (session.role === "STUDENT") {
+      throw new Error("Students cannot create homework.");
+    }
+
+    const subjectName = String(formData.get("subjectName") ?? "").trim();
+    const sectionName = String(formData.get("sectionName") ?? "").trim();
+    const className = String(formData.get("className") ?? "").trim();
+    const homeworkDateRaw = String(formData.get("homeworkDate") ?? "").trim();
+    const submissionDateRaw = String(formData.get("submissionDate") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
+    const selectedStudentIds = formData
+      .getAll("studentIds")
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0);
+    const singleStudentId = Number(formData.get("studentId") ?? 0);
+    const studentIds = selectedStudentIds.length ? selectedStudentIds : singleStudentId ? [singleStudentId] : [];
+    const attachmentFile = await getOptionalFileDataUrl(formData, "attachmentFile", 5);
+    const allowedSections = ["SECTION_A", "SECTION_B", "SECTION_C", "SECTION_D", "GENERAL"];
+
+    if (!subjectName || !sectionName || !className || !homeworkDateRaw || !submissionDateRaw || !description || studentIds.length === 0) {
+      throw new Error("All fields except attachment are required.");
+    }
+
+    if (!allowedSections.includes(sectionName)) {
+      throw new Error("Invalid section selected.");
+    }
+
+    const [students, createdBy] = await Promise.all([
+      prisma.student.findMany({ where: { status: "ACTIVE" }, select: { id: true } }),
+      prisma.user.findUnique({ where: { id: Number(session.sub) } }),
+    ]);
+
+    const studentIdSet = new Set(students.map((student: { id: number }) => student.id));
+    const invalidSelection = studentIds.some((id) => !studentIdSet.has(id));
+
+    if (invalidSelection) {
+      throw new Error("One or more selected students were not found.");
+    }
+
+    if (!createdBy) {
+      throw new Error("Current user not found.");
+    }
+
+    for (const studentId of studentIds) {
+      await prisma.homework.create({
+        data: {
+          subjectName,
+          sectionName,
+          className,
+          homeworkDate: new Date(homeworkDateRaw).toISOString(),
+          submissionDate: new Date(submissionDateRaw).toISOString(),
+          description,
+          attachmentFile,
+          studentId,
+          createdById: createdBy.id,
+        },
+      });
+    }
+
+    revalidatePath("/homework");
+    await setFlashMessage("success", "Homework saved successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/homework");
+}
+
+export async function saveNewsPost(formData: FormData) {
+  try {
+    const session = await requireSession();
+    ensureAccess("news", session.role);
+
+    if (session.role === "STUDENT" || session.role === "PARENT") {
+      throw new Error("You do not have permission to add or edit news posts.");
+    }
+
+    const newsId = Number(formData.get("newsId") ?? 0);
+    const title = String(formData.get("title") ?? "").trim();
+    const summary = String(formData.get("summary") ?? "").trim();
+    const content = String(formData.get("content") ?? "").trim();
+    const imageValue = formData.get("imageFile");
+
+    if (!title || !summary || !content) {
+      throw new Error("Title, summary, and content are required.");
+    }
+
+    if (imageValue instanceof File && imageValue.size > 0 && !imageValue.type.startsWith("image/")) {
+      throw new Error("News image must be a valid image file.");
+    }
+
+    const imageFile = await getOptionalFileDataUrl(formData, "imageFile", 5);
+
+    if (newsId) {
+      const existingNews = await prisma.news.findUnique({ where: { id: newsId } });
+      if (!existingNews) {
+        throw new Error("News post not found.");
+      }
+
+      const data: Record<string, unknown> = {
+        title,
+        summary,
+        content,
+      };
+
+      if (imageFile) {
+        data.imageFile = imageFile;
+      }
+
+      await prisma.news.update({ where: { id: newsId }, data });
+      await setFlashMessage("success", "News post updated successfully.");
+    } else {
+      await prisma.news.create({
+        data: {
+          title,
+          summary,
+          content,
+          imageFile,
+          createdById: Number(session.sub),
+        },
+      });
+      await setFlashMessage("success", "News post created successfully.");
+    }
+
+    revalidatePath("/news");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/news?tab=manage");
 }
 
 export async function sendNotification(formData: FormData) {
-  const session = await requireSession();
-  ensureAccess("notifications", session.role);
+  try {
+    const session = await requireSession();
+    ensureAccess("notifications", session.role);
 
-  const targetRole = String(formData.get("targetRole") ?? "STUDENT") as Role;
-  const title = String(formData.get("title") ?? "").trim();
-  const message = String(formData.get("message") ?? "").trim();
+    const targetRole = String(formData.get("targetRole") ?? "STUDENT") as Role;
+    const title = String(formData.get("title") ?? "").trim();
+    const message = String(formData.get("message") ?? "").trim();
 
-  if (!title || !message) {
-    throw new Error("Title and message are required.");
+    if (!title || !message) {
+      throw new Error("Title and message are required.");
+    }
+
+    const users = await prisma.user.findMany({ where: { role: targetRole }, select: { id: true } });
+
+    await prisma.notification.createMany({
+      data: users.map((user: { id: number }) => ({
+        userId: user.id,
+        title,
+        message,
+        status: "INFO",
+        type: "GENERAL",
+        monthKey: null,
+        resolvedAt: null,
+      })),
+    });
+
+    revalidatePath("/notifications");
+    await setFlashMessage("success", "Notification sent successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  const users = await prisma.user.findMany({ where: { role: targetRole }, select: { id: true } });
-
-  await prisma.notification.createMany({
-    data: users.map((user: { id: number }) => ({
-      userId: user.id,
-      title,
-      message,
-      status: "INFO",
-      type: "GENERAL",
-      monthKey: null,
-      resolvedAt: null,
-    })),
-  });
-
-  revalidatePath("/notifications");
+  await redirectToReferrer("/notifications");
 }
 
 export async function addUser(formData: FormData) {
-  const session = await requireSession();
-  if (session.role !== "FOUNDER") {
-    throw new Error("Only founder can add users.");
+  try {
+    const session = await requireSession();
+    if (session.role !== "FOUNDER") {
+      throw new Error("Only founder can add users.");
+    }
+
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const password = String(formData.get("password") ?? "").trim();
+    const role = String(formData.get("role") ?? "STUDENT") as Role;
+
+    if (!name || !email || !password) {
+      throw new Error("All user fields are required.");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await prisma.user.create({ data: { name, email, password: hashedPassword, role } });
+
+    revalidatePath("/settings");
+    await setFlashMessage("success", "User created successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "").trim();
-  const role = String(formData.get("role") ?? "STUDENT") as Role;
-
-  if (!name || !email || !password) {
-    throw new Error("All user fields are required.");
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-  await prisma.user.create({ data: { name, email, password: hashedPassword, role } });
-
-  revalidatePath("/settings");
+  await redirectToReferrer("/settings");
 }
 
 export async function deleteUser(formData: FormData) {
-  const session = await requireSession();
-  if (session.role !== "FOUNDER") {
-    throw new Error("Only founder can delete users.");
+  try {
+    const session = await requireSession();
+    if (session.role !== "FOUNDER") {
+      throw new Error("Only founder can delete users.");
+    }
+
+    const userId = Number(formData.get("userId") ?? 0);
+    if (userId === Number(session.sub)) {
+      throw new Error("Founder cannot delete active account.");
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+    revalidatePath("/settings");
+    await setFlashMessage("success", "User removed successfully.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
   }
 
-  const userId = Number(formData.get("userId") ?? 0);
-  if (userId === Number(session.sub)) {
-    throw new Error("Founder cannot delete active account.");
-  }
-
-  await prisma.user.delete({ where: { id: userId } });
-  revalidatePath("/settings");
+  await redirectToReferrer("/settings");
 }

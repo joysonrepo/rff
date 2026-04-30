@@ -7,6 +7,8 @@ export type AppModule =
   | "staff"
   | "staffList"
   | "attendance"
+  | "homework"
+  | "news"
   | "fees"
   | "reports"
   | "events"
@@ -23,6 +25,8 @@ const allModules: AppModule[] = [
   "staff",
   "staffList",
   "attendance",
+  "homework",
+  "news",
   "fees",
   "reports",
   "events",
@@ -35,15 +39,15 @@ const allModules: AppModule[] = [
 
 const permissionMap: Record<Role, AppModule[]> = {
   FOUNDER: allModules,
-  BOARD_DIRECTOR: ["dashboard", "reports"],
-  ADMIN_MANAGER: ["dashboard", "students", "studentList", "attendance", "events", "enrollments", "courses", "notifications"],
-  HR: ["dashboard", "staff", "staffList", "attendance", "reports"],
-  ACCOUNTS: ["dashboard", "fees", "reports", "staff", "staffList"],
-  PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "marks", "reports", "events"],
-  TEACHER: ["dashboard", "students", "studentList", "attendance", "marks", "events", "notifications"],
-  STAFF: ["dashboard", "attendance", "events", "notifications", "marks"],
-  PARENT: ["dashboard", "students", "studentList", "attendance", "marks", "fees", "events", "notifications"],
-  STUDENT: ["dashboard", "attendance", "marks", "events", "notifications"],
+  BOARD_DIRECTOR: ["dashboard", "news", "reports"],
+  ADMIN_MANAGER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "events", "enrollments", "courses", "notifications"],
+  HR: ["dashboard", "staff", "staffList", "attendance", "news", "reports"],
+  ACCOUNTS: ["dashboard", "fees", "news", "reports", "staff", "staffList"],
+  PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "reports", "events"],
+  TEACHER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "events", "notifications"],
+  STAFF: ["dashboard", "attendance", "news", "events", "notifications", "marks"],
+  PARENT: ["dashboard", "students", "studentList", "attendance", "news", "marks", "fees", "events", "notifications"],
+  STUDENT: ["dashboard", "attendance", "homework", "news", "marks", "events", "notifications"],
 };
 
 export function canAccess(role: Role, module: AppModule): boolean {

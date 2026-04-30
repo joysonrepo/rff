@@ -8,11 +8,13 @@ import { AppModule } from "@/lib/permissions";
 import { Role } from "@/lib/types";
 import { AppShellClient } from "@/components/AppShellClient";
 import { PageHeaderTitle } from "@/components/PageHeaderTitle";
+import { FlashMessage } from "@/lib/flash";
 
 type AppShellProps = {
   role: Role;
   name: string;
   profileImage?: string | null;
+  flash?: FlashMessage | null;
   children: ReactNode;
 };
 
@@ -23,6 +25,8 @@ const routeMap: Record<AppModule, string> = {
   staff: "/staff",
   staffList: "/staff-list",
   attendance: "/attendance",
+  homework: "/homework",
+  news: "/news",
   fees: "/fees",
   reports: "/reports",
   events: "/events",
@@ -40,6 +44,8 @@ const labelMap: Record<AppModule, string> = {
   staff: "Staff",
   staffList: "Staff List",
   attendance: "Attendance",
+  homework: "Homework",
+  news: "Newslet",
   fees: "Fees",
   reports: "Reports",
   events: "Events",
@@ -50,7 +56,7 @@ const labelMap: Record<AppModule, string> = {
   marks: "Marks",
 };
 
-export function AppShell({ role, name, profileImage, children }: AppShellProps) {
+export function AppShell({ role, name, profileImage, flash, children }: AppShellProps) {
   const allowedModules = getAllowedModules(role);
   const canSeeStudentsMenu = allowedModules.includes("students") || allowedModules.includes("studentList");
   const canSeeStaffMenu = allowedModules.includes("staff") || allowedModules.includes("staffList");
@@ -103,7 +109,7 @@ export function AppShell({ role, name, profileImage, children }: AppShellProps) 
   const initial = name.trim().charAt(0).toUpperCase() || "U";
 
   return (
-    <AppShellClient sidebarContent={sidebarContent}>
+    <AppShellClient sidebarContent={sidebarContent} flash={flash}>
       <section className={styles.main}>
         <header className={styles.top}>
           <PageHeaderTitle />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import styles from './AppShell.module.css';
 
 type MobileMenuToggleProps = {

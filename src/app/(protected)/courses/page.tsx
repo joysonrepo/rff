@@ -5,13 +5,26 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "../module.module.css";
 
+type CourseBatchRow = {
+  id: number;
+  name: string;
+  timing: string;
+};
+
+type CourseRow = {
+  id: number;
+  name: string;
+  type: string;
+  batches: CourseBatchRow[];
+};
+
 export default async function CoursesPage() {
   const session = await requireSession();
   if (!canAccess(session.role, "courses")) {
     return <AccessDenied moduleName="courses" />;
   }
 
-  const courses = await prisma.course.findMany({ include: { batches: true }, orderBy: { id: "desc" } });
+  const courses = (await prisma.course.findMany({ include: { batches: true }, orderBy: { id: "desc" } })) as unknown as CourseRow[];
 
   return (
     <div className={styles.wrap}>
@@ -47,11 +60,11 @@ export default async function CoursesPage() {
             </tr>
           </thead>
           <tbody>
-            {courses.map((course: any) => (
+            {courses.map((course) => (
               <tr key={course.id}>
                 <td>{course.name}</td>
                 <td>{course.type}</td>
-                <td>{course.batches.map((batch: any) => `${batch.name} (${batch.timing})`).join(", ") || "-"}</td>
+                <td>{course.batches.map((batch) => `${batch.name} (${batch.timing})`).join(", ") || "-"}</td>
               </tr>
             ))}
           </tbody>

@@ -116,6 +116,32 @@ export type Mark = {
   createdAt: string;
 };
 
+export type Homework = {
+  id: number;
+  subjectName: string;
+  sectionName: string;
+  className: string;
+  homeworkDate: string;
+  submissionDate: string;
+  description: string;
+  attachmentFile?: string | null;
+  studentId: number;
+  createdById: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type News = {
+  id: number;
+  title: string;
+  summary: string;
+  content: string;
+  imageFile?: string | null;
+  createdById: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Fee = {
   id: number;
   studentId: number;
