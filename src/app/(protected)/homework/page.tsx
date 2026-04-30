@@ -34,8 +34,8 @@ export default async function HomeworkPage({ searchParams }: HomeworkPageProps) 
     }),
     prisma.homework.findMany({
       include: {
-        student: { select: { id: true, name: true, userId: true, parentId: true } },
-        createdBy: { select: { id: true, name: true } },
+        student: true,
+        createdBy: true,
       },
       orderBy: { homeworkDate: "desc" },
     }),
