@@ -84,7 +84,7 @@ async function resolveReminder(notificationId: number): Promise<void> {
     where: { id: notificationId },
     data: {
       status: "RESOLVED",
-      resolvedAt: new Date(),
+      resolvedAt: new Date().toISOString(),
     },
   });
 }
@@ -180,7 +180,7 @@ export async function sendMonthlyFeeDelayReminders(
     const alreadyPaid = await studentHasPaidInMonth(student.id, start, end);
     const existingForMonth = (await prisma.notification.findMany({
       where: {
-        userId: student.userId,
+        userId: student.userId ?? 0,
         title,
       },
     })) as ReminderNotification[];
@@ -207,7 +207,7 @@ export async function sendMonthlyFeeDelayReminders(
 
     await prisma.notification.create({
       data: {
-        userId: student.userId,
+        userId: student.userId ?? 0,
         title,
         message,
         status: "PENDING",

@@ -30,8 +30,7 @@ export default async function ReportsPage() {
     prisma.staff.findMany({
       where: { status: "ACTIVE" },
       orderBy: { name: "asc" },
-      select: { name: true, role: true, salary: true },
-    }),
+    }) as unknown as Promise<StaffSalaryRow[]>,
   ]);
 
   const revenueData = [

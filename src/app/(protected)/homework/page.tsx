@@ -6,6 +6,12 @@ import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { MultiStudentSelect } from "@/components/MultiStudentSelect";
 import styles from "./homework.module.css";
+import type { Homework, Student, User } from "@/lib/types";
+
+type HomeworkWithRelations = Homework & {
+  student: Student;
+  createdBy: User;
+};
 
 const classOptions = ["KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
@@ -26,7 +32,7 @@ export default async function HomeworkPage({ searchParams }: HomeworkPageProps) 
   const params = await searchParams;
   const selectedStudentId = Number(params.studentId ?? 0);
 
-  const [students, homeworkRows] = await Promise.all([
+  const [students, homeworkRaw] = await Promise.all([
     prisma.student.findMany({
       select: { id: true, name: true, userId: true, parentId: true, className: true },
       where: { status: "ACTIVE" },
@@ -40,6 +46,8 @@ export default async function HomeworkPage({ searchParams }: HomeworkPageProps) 
       orderBy: { homeworkDate: "desc" },
     }),
   ]);
+
+  const homeworkRows = homeworkRaw as unknown as HomeworkWithRelations[];
 
   let visibleHomework = homeworkRows;
   if (session.role === "STUDENT") {

@@ -44,9 +44,9 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
   const editId = Number(params.edit ?? 0);
 
   const newsRows = (await prisma.news.findMany({
-    include: { createdBy: { select: { name: true, role: true } } },
+    include: { createdBy: true },
     orderBy: { createdAt: "desc" },
-  })) as NewsRow[];
+  })) as unknown as NewsRow[];
 
   const editRow = canManage && editId ? newsRows.find((row) => row.id === editId) ?? null : null;
 
