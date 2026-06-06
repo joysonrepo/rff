@@ -15,15 +15,17 @@ model User {
   role          String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  markedLogs    Attendance[]   @relation("AttendanceMarker")
-  attendanceLog Attendance[]   @relation("AttendanceUser")
-  postedHomeworks Homework[]   @relation("HomeworkCreator")
-  postedNews    News[]         @relation("NewsCreator")
-  notifications Notification[]
-  parent        Parent?
-  staff         Staff?
-  student       Student?
-  teacher       Teacher?
+  markedLogs       Attendance[]     @relation("AttendanceMarker")
+  attendanceLog    Attendance[]     @relation("AttendanceUser")
+  postedHomeworks  Homework[]       @relation("HomeworkCreator")
+  postedNews       News[]           @relation("NewsCreator")
+  notifications    Notification[]
+  createdTasks     ActivityTask[]   @relation("ActivityTaskCreator")
+  reviewedTasks    TaskAssignment[] @relation("TaskReviewer")
+  parent           Parent?
+  staff            Staff?
+  student          Student?
+  teacher          Teacher?
 }
 
 model Parent {
@@ -68,6 +70,7 @@ model Student {
   fees               Fee[]
   homeworks          Homework[]
   marks              Mark[]
+  taskAssignments    TaskAssignment[]
   batch              Batch?       @relation(fields: [batchId], references: [id])
   parent             Parent?      @relation(fields: [parentId], references: [id])
   user               User?        @relation(fields: [userId], references: [id])
@@ -253,4 +256,35 @@ model Notification {
   resolvedAt DateTime?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model ActivityTask {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String?
+  stars       Int              @default(1)
+  createdById Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  createdBy   User             @relation("ActivityTaskCreator", fields: [createdById], references: [id])
+  assignments TaskAssignment[]
+}
+
+model TaskAssignment {
+  id           Int          @id @default(autoincrement())
+  taskId       Int
+  studentId    Int
+  status       String       @default("ASSIGNED")
+  requestedAt  DateTime?
+  reviewedAt   DateTime?
+  reviewedById Int?
+  starsAwarded Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  task         ActivityTask @relation(fields: [taskId], references: [id])
+  student      Student      @relation(fields: [studentId], references: [id])
+  reviewedBy   User?        @relation("TaskReviewer", fields: [reviewedById], references: [id])
+
+  @@unique([taskId, studentId])
+  @@index([studentId])
 }

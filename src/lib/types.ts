@@ -223,3 +223,28 @@ export type Notification = {
   resolvedAt?: string | null;
   createdAt: string;
 };
+
+export type ActivityTask = {
+  id: number;
+  title: string;
+  description?: string | null;
+  stars: number;
+  createdById: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TaskAssignmentStatus = "ASSIGNED" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+
+export type TaskAssignment = {
+  id: number;
+  taskId: number;
+  studentId: number;
+  status: TaskAssignmentStatus;
+  requestedAt?: string | null;
+  reviewedAt?: string | null;
+  reviewedById?: number | null;
+  starsAwarded?: number | null;
+  createdAt: string;
+  updatedAt: string;
+};

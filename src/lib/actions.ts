@@ -13,6 +13,22 @@ import { sendMonthlyFeeDelayReminders } from "@/lib/feeReminders";
 
 const FIRESTORE_SAFE_DATA_URL_MAX_BYTES = 900 * 1024;
 const PROFILE_IMAGE_MAX_BYTES = 700 * 1024;
+const VALID_ROLES: Role[] = [
+  "FOUNDER",
+  "BOARD_DIRECTOR",
+  "ADMIN_MANAGER",
+  "HR",
+  "ACCOUNTS",
+  "PRINCIPAL",
+  "TEACHER",
+  "STAFF",
+  "PARENT",
+  "STUDENT",
+];
+
+function isRole(value: string): value is Role {
+  return VALID_ROLES.includes(value as Role);
+}
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) {
@@ -711,7 +727,7 @@ export async function addMark(formData: FormData) {
     const marks = Number(formData.get("marks") ?? 0);
     const examType = String(formData.get("examType") ?? "").trim();
 
-    if (!studentId || !subject || Number.isNaN(marks)) {
+    if (!studentId || !subject || !Number.isFinite(marks) || marks < 0 || marks > 100) {
       throw new Error("Student, subject and marks are required.");
     }
 
@@ -915,9 +931,15 @@ export async function addUser(formData: FormData) {
     }
 
     const name = String(formData.get("name") ?? "").trim();
-    const email = String(formData.get("email") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "").trim();
-    const role = String(formData.get("role") ?? "STUDENT") as Role;
+    const roleValue = String(formData.get("role") ?? "STUDENT").trim();
+
+    if (!isRole(roleValue)) {
+      throw new Error("Invalid role selected.");
+    }
+
+    const role = roleValue;
 
     if (!name || !email || !password) {
       throw new Error("All user fields are required.");
@@ -955,4 +977,245 @@ export async function deleteUser(formData: FormData) {
   }
 
   await redirectToReferrer("/settings");
+}
+
+// ── Activity Achievements ──────────────────────────────────────────────────
+
+export async function createActivityTask(formData: FormData) {
+  try {
+    const session = await requireSession();
+    ensureAccess("achievements", session.role);
+
+    if (session.role !== "TEACHER" && session.role !== "PRINCIPAL" && session.role !== "FOUNDER") {
+      throw new Error("Only teachers can create tasks.");
+    }
+
+    const title = String(formData.get("title") ?? "").trim();
+    const description = getOptionalString(formData, "description");
+    const stars = Number(formData.get("stars") ?? 1);
+    const studentIds = formData.getAll("studentIds").map(Number).filter(Boolean);
+
+    if (!title) throw new Error("Task title is required.");
+    if (stars < 1 || stars > 10) throw new Error("Stars must be between 1 and 10.");
+    if (studentIds.length === 0) throw new Error("Select at least one student.");
+
+    const task = await prisma.activityTask.create({
+      data: {
+        title,
+        description,
+        stars,
+        createdById: Number(session.sub),
+        assignments: {
+          create: studentIds.map((studentId) => ({ studentId, status: "ASSIGNED" })),
+        },
+      },
+    });
+
+    revalidatePath("/achievements");
+    await setFlashMessage("success", `Task "${task.title}" created and assigned.`);
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/achievements");
+}
+
+export async function requestTaskCompletion(formData: FormData) {
+  try {
+    const session = await requireSession();
+    if (session.role !== "STUDENT") throw new Error("Only students can request completion.");
+
+    const assignmentId = Number(formData.get("assignmentId") ?? 0);
+    if (!assignmentId) throw new Error("Invalid assignment.");
+
+    const student = await prisma.student.findFirst({ where: { userId: Number(session.sub) } });
+    if (!student) throw new Error("Student record not found.");
+
+    const assignment = await prisma.taskAssignment.findUnique({ where: { id: assignmentId } });
+    if (!assignment || assignment.studentId !== student.id) throw new Error("Assignment not found.");
+    if (assignment.status !== "ASSIGNED") throw new Error("Task already submitted or reviewed.");
+
+    await prisma.taskAssignment.update({
+      where: { id: assignmentId },
+      data: { status: "PENDING_REVIEW" as const, requestedAt: new Date().toISOString() },
+    });
+
+    revalidatePath("/achievements");
+    await setFlashMessage("success", "Completion request sent to teacher.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/achievements");
+}
+
+export async function reviewTaskAssignment(formData: FormData) {
+  try {
+    const session = await requireSession();
+
+    if (session.role !== "TEACHER" && session.role !== "PRINCIPAL" && session.role !== "FOUNDER") {
+      throw new Error("Only teachers can review tasks.");
+    }
+
+    const assignmentId = Number(formData.get("assignmentId") ?? 0);
+    const action = String(formData.get("action") ?? "").trim();
+
+    if (!assignmentId) throw new Error("Invalid assignment.");
+    if (action !== "APPROVED" && action !== "REJECTED") throw new Error("Invalid action.");
+
+    const assignment = await prisma.taskAssignment.findUnique({ where: { id: assignmentId } });
+    if (!assignment) throw new Error("Assignment not found.");
+    if (assignment.status !== "PENDING_REVIEW") throw new Error("Assignment is not awaiting review.");
+
+    // fetch the task separately to get star count
+    const tasks = await prisma.activityTask.findMany({ where: { id: assignment.taskId } });
+    const task = tasks[0];
+    if (!task) throw new Error("Task not found.");
+
+    await prisma.taskAssignment.update({
+      where: { id: assignmentId },
+      data: {
+        status: action as "APPROVED" | "REJECTED",
+        reviewedAt: new Date().toISOString(),
+        reviewedById: Number(session.sub),
+        starsAwarded: action === "APPROVED" ? task.stars : null,
+      },
+    });
+
+    revalidatePath("/achievements");
+    await setFlashMessage("success", action === "APPROVED" ? "Task approved — stars awarded!" : "Task rejected.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/achievements");
+}
+
+export async function deleteActivityTask(formData: FormData) {
+  try {
+    const session = await requireSession();
+
+    if (session.role !== "TEACHER" && session.role !== "PRINCIPAL" && session.role !== "FOUNDER") {
+      throw new Error("Only teachers can delete tasks.");
+    }
+
+    const taskId = Number(formData.get("taskId") ?? 0);
+    if (!taskId) throw new Error("Invalid task.");
+
+    await prisma.taskAssignment.deleteMany({ where: { taskId } });
+    await prisma.activityTask.delete({ where: { id: taskId } });
+
+    revalidatePath("/achievements");
+    await setFlashMessage("success", "Task deleted.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/achievements");
+}
+
+export async function updateActivityTask(formData: FormData) {
+  try {
+    const session = await requireSession();
+
+    if (session.role !== "TEACHER" && session.role !== "PRINCIPAL" && session.role !== "FOUNDER") {
+      throw new Error("Only teachers can update tasks.");
+    }
+
+    const taskId = Number(formData.get("taskId") ?? 0);
+    const title = String(formData.get("title") ?? "").trim();
+    const description = getOptionalString(formData, "description");
+    const stars = Number(formData.get("stars") ?? 0);
+    const studentIds = [...new Set(formData
+      .getAll("studentIds")
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0))];
+
+    if (!taskId) throw new Error("Invalid task.");
+    if (!title) throw new Error("Task title is required.");
+    if (!Number.isInteger(stars) || stars < 1 || stars > 10) {
+      throw new Error("Stars must be between 1 and 10.");
+    }
+    if (studentIds.length === 0) {
+      throw new Error("Select at least one student.");
+    }
+
+    const taskRows = await prisma.activityTask.findMany({ where: { id: taskId } });
+    const task = taskRows[0];
+    if (!task) throw new Error("Task not found.");
+
+    const activeStudents = await prisma.student.findMany({
+      where: { status: "ACTIVE" },
+      select: { id: true, name: true },
+    });
+    const activeStudentIdSet = new Set(activeStudents.map((student) => student.id));
+    const activeStudentNameById = new Map(activeStudents.map((student) => [student.id, student.name]));
+    const invalidSelection = studentIds.some((id) => !activeStudentIdSet.has(id));
+    if (invalidSelection) {
+      throw new Error("One or more selected students are invalid.");
+    }
+
+    await prisma.activityTask.update({
+      where: { id: taskId },
+      data: {
+        title,
+        description,
+        stars,
+      },
+    });
+
+    const approvedAssignments = await prisma.taskAssignment.findMany({
+      where: { taskId, status: "APPROVED" },
+    });
+
+    for (const assignment of approvedAssignments) {
+      await prisma.taskAssignment.update({
+        where: { id: assignment.id },
+        data: { starsAwarded: stars },
+      });
+    }
+
+    const existingAssignments = await prisma.taskAssignment.findMany({ where: { taskId } });
+
+    const selectedStudentIdSet = new Set(studentIds);
+    const existingStudentIdSet = new Set(existingAssignments.map((assignment) => assignment.studentId));
+
+    const toAdd = studentIds.filter((id) => !existingStudentIdSet.has(id));
+    const toRemove = existingAssignments.filter((assignment) => !selectedStudentIdSet.has(assignment.studentId));
+
+    const blockedRemovals = toRemove.filter(
+      (assignment) => assignment.status === "PENDING_REVIEW" || assignment.status === "APPROVED",
+    );
+    if (blockedRemovals.length > 0) {
+      const blockedStudentNames = blockedRemovals
+        .map((assignment) => activeStudentNameById.get(assignment.studentId) ?? `Student ${assignment.studentId}`)
+        .join(", ");
+      throw new Error(`Cannot unassign students with submitted/reviewed work: ${blockedStudentNames}`);
+    }
+
+    for (const assignment of toRemove) {
+      await prisma.taskAssignment.deleteMany({ where: { taskId, studentId: assignment.studentId } });
+    }
+
+    for (const studentId of toAdd) {
+      await prisma.taskAssignment.create({
+        data: {
+          taskId,
+          studentId,
+          status: "ASSIGNED",
+          requestedAt: null,
+          reviewedAt: null,
+          reviewedById: null,
+          starsAwarded: null,
+        },
+      });
+    }
+
+    revalidatePath("/achievements");
+    await setFlashMessage("success", `Task "${title}" updated successfully.`);
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  redirect("/achievements");
 }

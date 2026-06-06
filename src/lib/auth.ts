@@ -14,6 +14,23 @@ export type SessionPayload = {
   role: Role;
 };
 
+const VALID_ROLES: Role[] = [
+  "FOUNDER",
+  "BOARD_DIRECTOR",
+  "ADMIN_MANAGER",
+  "HR",
+  "ACCOUNTS",
+  "PRINCIPAL",
+  "TEACHER",
+  "STAFF",
+  "PARENT",
+  "STUDENT",
+];
+
+function isRole(value: string): value is Role {
+  return VALID_ROLES.includes(value as Role);
+}
+
 function getSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
@@ -87,10 +104,25 @@ export async function getSession(): Promise<SessionPayload | null> {
       return null;
     }
 
+    if (!isRole(payload.role)) {
+      return null;
+    }
+
+    const userId = Number(payload.sub);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return null;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user || !isRole(user.role)) {
+      return null;
+    }
+
     return {
-      sub: payload.sub,
-      name: payload.name,
-      role: payload.role as Role,
+      sub: String(user.id),
+      name: user.name,
+      role: user.role,
     };
   } catch {
     return null;

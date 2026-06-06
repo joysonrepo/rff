@@ -10,6 +10,8 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   const userId = Number(session.sub);
 
   let profileImage: string | null = null;
+  let totalStars: number | undefined = undefined;
+
   if (Number.isFinite(userId) && userId > 0) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
 
@@ -25,11 +27,19 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
       const studentMatch = studentRows.find((student) => student.userId === user.id || student.name === user.name);
 
       profileImage = staffMatch?.profileImage?.trim() || studentMatch?.profileImage?.trim() || null;
+
+      if (session.role === "STUDENT" && studentMatch) {
+        const agg = await prisma.taskAssignment.aggregate({
+          where: { studentId: studentMatch.id, status: "APPROVED" },
+          _sum: { starsAwarded: true },
+        });
+        totalStars = agg._sum.starsAwarded ?? 0;
+      }
     }
   }
 
   return (
-    <AppShell role={session.role} name={session.name} profileImage={profileImage} flash={flash}>
+    <AppShell role={session.role} name={session.name} profileImage={profileImage} flash={flash} totalStars={totalStars}>
       {children}
     </AppShell>
   );

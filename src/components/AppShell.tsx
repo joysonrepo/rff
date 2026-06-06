@@ -15,6 +15,7 @@ type AppShellProps = {
   name: string;
   profileImage?: string | null;
   flash?: FlashMessage | null;
+  totalStars?: number;
   children: ReactNode;
 };
 
@@ -35,6 +36,7 @@ const routeMap: Record<AppModule, string> = {
   courses: "/courses",
   notifications: "/notifications",
   marks: "/marks",
+  achievements: "/achievements",
 };
 
 const labelMap: Record<AppModule, string> = {
@@ -54,9 +56,10 @@ const labelMap: Record<AppModule, string> = {
   courses: "Courses & Batches",
   notifications: "Notifications",
   marks: "Marks",
+  achievements: "🌟 Achievements",
 };
 
-export function AppShell({ role, name, profileImage, flash, children }: AppShellProps) {
+export function AppShell({ role, name, profileImage, flash, totalStars, children }: AppShellProps) {
   const allowedModules = getAllowedModules(role);
   const canSeeStudentsMenu = allowedModules.includes("students") || allowedModules.includes("studentList");
   const canSeeStaffMenu = allowedModules.includes("staff") || allowedModules.includes("staffList");
@@ -123,6 +126,13 @@ export function AppShell({ role, name, profileImage, flash, children }: AppShell
                 </span>
               )}
               <span className={styles.userName}>{name}</span>
+              {role === "STUDENT" && typeof totalStars === "number" && (
+                <span className={styles.starBadge} title={`${totalStars} stars earned`}>
+                  {"⭐".repeat(Math.min(totalStars, 5))}
+                  {totalStars > 5 ? ` +${totalStars - 5}` : ""}
+                  {totalStars === 0 ? "⭐ 0" : ""}
+                </span>
+              )}
             </div>
             <form action={doLogout}>
               <button type="submit">Logout</button>

@@ -16,7 +16,8 @@ export type AppModule =
   | "enrollments"
   | "courses"
   | "notifications"
-  | "marks";
+  | "marks"
+  | "achievements";
 
 const allModules: AppModule[] = [
   "dashboard",
@@ -35,6 +36,7 @@ const allModules: AppModule[] = [
   "courses",
   "notifications",
   "marks",
+  "achievements",
 ];
 
 const permissionMap: Record<Role, AppModule[]> = {
@@ -44,10 +46,10 @@ const permissionMap: Record<Role, AppModule[]> = {
   HR: ["dashboard", "staff", "staffList", "attendance", "news", "reports"],
   ACCOUNTS: ["dashboard", "fees", "news", "reports", "staff", "staffList"],
   PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "reports", "events"],
-  TEACHER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "events", "notifications"],
+  TEACHER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
   STAFF: ["dashboard", "attendance", "news", "events", "notifications", "marks"],
   PARENT: ["dashboard", "students", "studentList", "attendance", "news", "marks", "fees", "events", "notifications"],
-  STUDENT: ["dashboard", "attendance", "homework", "news", "marks", "events", "notifications"],
+  STUDENT: ["dashboard", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
 };
 
 export function canAccess(role: Role, module: AppModule): boolean {

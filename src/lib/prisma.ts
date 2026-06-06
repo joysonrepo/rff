@@ -17,6 +17,7 @@ import {
   Teacher,
   User,
 } from "@/lib/types";
+import { ActivityTask, TaskAssignment } from "@/lib/types";
 
 const { PrismaClient } = prismaPkg;
 
@@ -231,6 +232,11 @@ const firestorePrisma = {
     },
     async findUnique(args: { where: WhereClause }) {
       return findUniqueByField<Student>("students", args.where);
+    },
+    async findFirst(args: { where: WhereClause }) {
+      const rows = applyWhere(await listCollection<Student>("students"), args.where);
+      if (rows.length === 0) return null;
+      return rows[0] as Student;
     },
     async update(args: { where: { id: number }; data: Partial<Student> }) {
       return updateById<Student>("students", args.where.id, { ...args.data, updatedAt: nowIso() });
@@ -461,4 +467,126 @@ const firestorePrisma = {
   },
 };
 
-export const prisma = (hasFirebaseAdminConfig() ? firestorePrisma : getSqlitePrismaClient()) as typeof firestorePrisma;
+async function includeTaskAssignmentRelations(
+  items: TaskAssignment[],
+): Promise<Array<TaskAssignment & { task: ActivityTask; student: { id: number; name: string } }>> {
+  const [tasks, students] = await Promise.all([
+    listCollection<ActivityTask>("activityTasks"),
+    listCollection<Student>("students"),
+  ]);
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const studentMap = new Map(students.map((s) => [s.id, { id: s.id, name: s.name }]));
+  return items
+    .map((item) => ({
+      ...item,
+      task: taskMap.get(item.taskId)!,
+      student: studentMap.get(item.studentId)!,
+    }))
+    .filter((item) => item.task && item.student);
+}
+
+async function includeActivityTaskAssignments(
+  tasks: ActivityTask[],
+): Promise<Array<ActivityTask & { assignments: Array<TaskAssignment & { student: { id: number; name: string } }> }>> {
+  const [assignments, students] = await Promise.all([
+    listCollection<TaskAssignment>("taskAssignments"),
+    listCollection<Student>("students"),
+  ]);
+  const studentMap = new Map(students.map((s) => [s.id, { id: s.id, name: s.name }]));
+  return tasks.map((task) => ({
+    ...task,
+    assignments: assignments
+      .filter((a) => a.taskId === task.id)
+      .map((a) => ({ ...a, student: studentMap.get(a.studentId)! }))
+      .filter((a) => a.student),
+  }));
+}
+
+const firestoreActivityPrisma = {
+  activityTask: {
+    async create(args: { data: Omit<ActivityTask, "id" | "createdAt" | "updatedAt"> & { assignments?: { create: Array<{ studentId: number; status: string }> } } }) {
+      const { assignments, ...taskData } = args.data as typeof args.data & { assignments?: { create: Array<{ studentId: number; status: string }> } };
+      const task = await createWithId<ActivityTask>("activityTasks", { ...taskData, createdAt: nowIso(), updatedAt: nowIso() });
+      if (assignments?.create) {
+        for (const a of assignments.create) {
+          await createWithId<TaskAssignment>("taskAssignments", {
+            taskId: task.id,
+            studentId: a.studentId,
+            status: a.status as import("@/lib/types").TaskAssignmentStatus,
+            requestedAt: null,
+            reviewedAt: null,
+            reviewedById: null,
+            starsAwarded: null,
+            createdAt: nowIso(),
+            updatedAt: nowIso(),
+          });
+        }
+      }
+      return task;
+    },
+    async findMany(args?: {
+      where?: WhereClause;
+      orderBy?: Record<string, SortDirection>;
+      include?: { assignments?: { include?: { student?: boolean } } };
+    }) {
+      const rows = applyOrder(applyWhere(await listCollection<ActivityTask>("activityTasks"), args?.where), args?.orderBy);
+      if (args?.include?.assignments) {
+        return includeActivityTaskAssignments(rows);
+      }
+      return rows;
+    },
+    async update(args: { where: { id: number }; data: Partial<ActivityTask> }) {
+      return updateById<ActivityTask>("activityTasks", args.where.id, { ...args.data, updatedAt: nowIso() });
+    },
+    async delete(args: { where: { id: number } }) {
+      await deleteById("activityTasks", args.where.id);
+    },
+  },
+  taskAssignment: {
+    async create(args: { data: Omit<TaskAssignment, "id" | "createdAt" | "updatedAt"> }) {
+      return createWithId<TaskAssignment>("taskAssignments", {
+        ...args.data,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      });
+    },
+    async findUnique(args: { where: WhereClause; include?: { task?: boolean } }) {
+      const item = await findUniqueByField<TaskAssignment>("taskAssignments", args.where);
+      if (!item || !args.include?.task) return item;
+      const [result] = await includeTaskAssignmentRelations([item]);
+      return result ?? null;
+    },
+    async findMany(args?: {
+      where?: WhereClause;
+      orderBy?: Record<string, SortDirection>;
+      include?: { task?: boolean; student?: boolean };
+    }) {
+      const rows = applyOrder(applyWhere(await listCollection<TaskAssignment>("taskAssignments"), args?.where), args?.orderBy);
+      if (args?.include?.task || args?.include?.student) {
+        return includeTaskAssignmentRelations(rows);
+      }
+      return rows;
+    },
+    async update(args: { where: { id: number }; data: Partial<TaskAssignment> }) {
+      return updateById<TaskAssignment>("taskAssignments", args.where.id, { ...args.data, updatedAt: nowIso() });
+    },
+    async deleteMany(args: { where: WhereClause }) {
+      const rows = applyWhere(await listCollection<TaskAssignment>("taskAssignments"), args.where);
+      for (const row of rows) {
+        await deleteById("taskAssignments", row.id);
+      }
+    },
+    async aggregate(args: { where?: WhereClause; _sum: { starsAwarded: boolean } }) {
+      const rows = applyWhere(await listCollection<TaskAssignment>("taskAssignments"), args.where);
+      return {
+        _sum: {
+          starsAwarded: args._sum.starsAwarded ? rows.reduce((sum, row) => sum + (Number(row.starsAwarded) || 0), 0) : 0,
+        },
+      };
+    },
+  },
+};
+
+const combinedFirestorePrisma = { ...firestorePrisma, ...firestoreActivityPrisma };
+
+export const prisma = (hasFirebaseAdminConfig() ? combinedFirestorePrisma : getSqlitePrismaClient()) as typeof combinedFirestorePrisma;
