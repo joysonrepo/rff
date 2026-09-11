@@ -1,4 +1,5 @@
 import { AccessDenied } from "@/components/AccessDenied";
+import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -104,7 +105,7 @@ function mapUsersIntoStaffRows(staffRows: Staff[], users: User[]): StaffListRow[
   return rows.sort((a, b) => b.id - a.id);
 }
 
-export default async function StaffListPage() {
+export default async function StaffListPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const session = await requireSession();
   if (!canAccess(session.role, "staffList")) {
     return <AccessDenied moduleName="staff" />;
@@ -117,13 +118,31 @@ export default async function StaffListPage() {
 
   const mergedRows = mapUsersIntoStaffRows(staff as Staff[], users as User[]);
   const normalizedStaff = normalizeStaff(mergedRows).filter((employee) => employee.status !== "INACTIVE");
+  const params = await searchParams;
+  const pageSize = 10;
+  const requestedPage = Number.parseInt(params.page ?? "1", 10);
+  const totalPages = Math.max(1, Math.ceil(normalizedStaff.length / pageSize));
+  const currentPage = Number.isFinite(requestedPage) ? Math.min(Math.max(requestedPage, 1), totalPages) : 1;
+  const pageStart = (currentPage - 1) * pageSize;
+  const visibleStaff = normalizedStaff.slice(pageStart, pageStart + pageSize);
   const canManage = session.role === "FOUNDER" || session.role === "HR";
 
   return (
     <div className={styles.wrap}>
       <section className={styles.section}>
-        <h2>Staff List</h2>
-        <StaffListTable staff={normalizedStaff} showManageActions={canManage} />
+        <div className={styles.listHeader}>
+          <h2>Staff List</h2>
+          <nav className={styles.pagination} aria-label="Staff list pages">
+            {currentPage > 1 && <Link href={`/staff-list?page=${currentPage - 1}`} className={styles.pageLink}>Previous</Link>}
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <Link key={page} href={`/staff-list?page=${page}`} className={`${styles.pageLink} ${page === currentPage ? styles.pageLinkActive : ""}`}>
+                {page}
+              </Link>
+            ))}
+            {currentPage < totalPages && <Link href={`/staff-list?page=${currentPage + 1}`} className={styles.pageLink}>Next</Link>}
+          </nav>
+        </div>
+        <StaffListTable staff={visibleStaff} showManageActions={canManage} />
       </section>
     </div>
   );

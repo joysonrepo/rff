@@ -1,10 +1,8 @@
-"use client";
-
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "@/app/(protected)/module.module.css";
 import { Student } from "@/lib/types";
 import { deactivateStudent } from "@/lib/actions";
+import { StudentProfileDialog } from "./StudentProfileDialog";
 
 type StudentWithParent = Student & {
   parent?: {
@@ -19,13 +17,6 @@ type StudentListTableProps = {
 };
 
 export function StudentListTable({ students, showViewAction = true, showManageActions = false }: StudentListTableProps) {
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-
-  const selected = useMemo(
-    () => students.find((student) => student.id === selectedStudentId) ?? null,
-    [students, selectedStudentId],
-  );
-
   return (
     <>
       <div className={styles.tableScroll}>
@@ -56,10 +47,7 @@ export function StudentListTable({ students, showViewAction = true, showManageAc
                   <td>
                     <div className={styles.actionRow}>
                       {showViewAction && (
-                        <button type="button" className={styles.button} onClick={() => setSelectedStudentId(student.id)}>
-                          <span className={styles.actionButtonText}>View Student</span>
-                          <span className={styles.actionButtonIcon}>View</span>
-                        </button>
+                        <StudentProfileDialog student={student} />
                       )}
                       {showManageActions && (
                         <>
@@ -87,46 +75,6 @@ export function StudentListTable({ students, showViewAction = true, showManageAc
         </table>
       </div>
 
-      {showViewAction && selected && (
-        <dialog open className={styles.dialog}>
-          <div className={styles.dialogHeader}>
-            <h3 className={styles.dialogTitle}>Student Profile</h3>
-            <button type="button" className={styles.iconClose} onClick={() => setSelectedStudentId(null)} aria-label="Close dialog">
-              x
-            </button>
-          </div>
-
-          <div className={styles.profileWrap}>
-            <img
-              src={selected.profileImage || "https://placehold.co/180x180/png?text=Student"}
-              alt={`${selected.name} profile`}
-              className={styles.profileImage}
-            />
-
-            <div className={styles.profileGrid}>
-              <div><strong>Name:</strong> {selected.name}</div>
-              <div><strong>Class:</strong> {selected.className ?? "-"}</div>
-              <div><strong>Age:</strong> {selected.age}</div>
-              <div><strong>Date of Birth:</strong> {selected.dateOfBirth ? new Date(selected.dateOfBirth).toLocaleDateString() : "-"}</div>
-              <div><strong>Course:</strong> {selected.course}</div>
-              <div><strong>How Heard:</strong> {selected.howDidYouHear ?? "-"}</div>
-              <div><strong>Enquiry:</strong> {selected.enquiryStatus ?? "-"}</div>
-              <div><strong>City:</strong> {selected.city ?? "-"}</div>
-              <div><strong>State:</strong> {selected.state ?? "-"}</div>
-              <div><strong>Residential Address:</strong> {selected.residentialAddress ?? "-"}</div>
-              <div><strong>Permanent Address:</strong> {selected.permanentAddress ?? "-"}</div>
-              <div><strong>Father Name:</strong> {selected.fatherName ?? "-"}</div>
-              <div><strong>Father Email:</strong> {selected.fatherEmail ?? "-"}</div>
-              <div><strong>Father Mobile:</strong> {selected.fatherMobile ?? "-"}</div>
-              <div><strong>Mother Name:</strong> {selected.motherName ?? "-"}</div>
-              <div><strong>Mother Email:</strong> {selected.motherEmail ?? "-"}</div>
-              <div><strong>Mother Mobile:</strong> {selected.motherMobile ?? "-"}</div>
-              <div><strong>Fee Offered:</strong> {selected.feeOffered ?? "-"}</div>
-              <div><strong>Parent Account:</strong> {selected.parent?.name ?? "-"}</div>
-            </div>
-          </div>
-        </dialog>
-      )}
     </>
   );
 }

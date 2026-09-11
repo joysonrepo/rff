@@ -45,6 +45,45 @@
   color: #5b6372;
 }
 
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.listHeader h2 {
+  margin: 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.75rem auto;
+}
+
+.pageLink {
+  min-width: 2.25rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #ced8e8;
+  border-radius: 8px;
+  color: #1f2a44;
+  background: #fff;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pageLinkActive {
+  border-color: #2d4a7a;
+  background: #2d4a7a;
+  color: #fff;
+}
+
 .table {
   display: table;
   width: 100%;
@@ -96,6 +135,54 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.75rem;
+}
+
+.formGrid > label {
+  display: grid;
+  gap: 0.35rem;
+  color: #4e596f;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.attendanceTiles {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid #dfe6f1;
+  border-radius: 12px;
+  background: #f7f9fd;
+}
+
+.attendanceTile {
+  width: auto;
+  border: 1px solid #ced8e8;
+  border-radius: 999px;
+  padding: 0.55rem 0.8rem;
+  background: #fff;
+  color: #1f2a44;
+  cursor: pointer;
+  font: inherit;
+}
+
+.attendanceTileSelected {
+  border-color: #2d4a7a;
+  background: #2d4a7a;
+  color: #fff;
+}
+
+.attendanceHelp {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.attendanceSubmit {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: auto;
+  min-width: 220px;
 }
 
 .input,

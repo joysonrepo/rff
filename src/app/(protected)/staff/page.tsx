@@ -63,10 +63,10 @@ export default async function StaffPage() {
               <h2 className={styles.collapsibleTitle}>Add Staff</h2>
             </summary>
             <div className={styles.collapsibleBody}>
-              <form action={addStaff} className={styles.formGrid}>
-                <input className={styles.input} name="name" placeholder="Name" required />
-                <ValidatedProfileImageInput className={styles.input} />
-                <select className={styles.select} name="role" defaultValue="" required>
+              <form action={addStaff} className={styles.formGrid} autoComplete="off">
+                <label>Name<input className={styles.input} name="name" required /></label>
+                <label>Profile image<ValidatedProfileImageInput className={styles.input} /></label>
+                <label>User role<select className={styles.select} name="role" defaultValue="" required>
                   <option value="" disabled>
                     Select user role
                   </option>
@@ -75,20 +75,25 @@ export default async function StaffPage() {
                       {item.label}
                     </option>
                   ))}
-                </select>
-                <input className={styles.input} name="salary" type="number" min={0} step="0.01" placeholder="Salary" />
-                <input className={styles.input} name="username" placeholder="Staff username" required />
-                <input className={styles.input} name="password" type="password" placeholder="Staff password" required />
-                <input className={styles.input} name="dateOfBirth" type="date" />
-                <input className={styles.input} name="email" placeholder="Email" type="email" />
-                <input className={styles.input} name="contactNumber" placeholder="Contact number" />
-                <input className={styles.input} name="emergencyContact" placeholder="Emergency contact" />
-                <input className={styles.input} name="address" placeholder="Address" />
-                <input className={styles.input} name="city" placeholder="City" />
-                <input className={styles.input} name="state" placeholder="State" />
-                <input className={styles.input} name="qualification" placeholder="Qualification" />
-                <input className={styles.input} name="experienceYears" type="number" min={0} placeholder="Experience years" />
-                <input className={styles.input} name="joiningDate" type="date" />
+                </select></label>
+                <label>Salary<input className={styles.input} name="salary" type="number" min={0} step="0.01" /></label>
+                <label>Staff username<input className={styles.input} name="username" autoComplete="new-username" required /></label>
+                <label>Staff password<input className={styles.input} name="password" type="password" autoComplete="new-password" required /></label>
+                <label>Date of birth<input className={styles.input} name="dateOfBirth" type="date" /></label>
+                <label>Email<input className={styles.input} name="email" type="email" /></label>
+                <label>Contact number<input className={styles.input} name="contactNumber" /></label>
+                <label>Emergency contact<input className={styles.input} name="emergencyContact" /></label>
+                <label>Address<input className={styles.input} name="address" /></label>
+                <label>City<input className={styles.input} name="city" /></label>
+                <label>State<input className={styles.input} name="state" /></label>
+                <label>Qualification<input className={styles.input} name="qualification" /></label>
+                <label>Experience years<input className={styles.input} name="experienceYears" type="number" min={0} /></label>
+                <label>Joining date<input className={styles.input} name="joiningDate" type="date" /></label>
+                <label>Bank name<input className={styles.input} name="bankName" /></label>
+                <label>Account holder name<input className={styles.input} name="accountHolderName" /></label>
+                <label>Bank account number<input className={styles.input} name="bankAccountNumber" /></label>
+                <label>IFSC code<input className={styles.input} name="bankIfscCode" /></label>
+                <label>Bank branch<input className={styles.input} name="bankBranch" /></label>
                 <button className={styles.button} type="submit">
                   Save Employee
                 </button>

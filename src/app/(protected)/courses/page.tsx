@@ -39,7 +39,8 @@ export default async function CoursesPage() {
               <select className={styles.select} name="type">
                 <option value="MONTESSORI">Montessori</option>
                 <option value="MUSIC">Music</option>
-                <option value="TUITION">Tuition</option>
+                <option value="NEST">Nest</option>
+                <option value="PSA">PSA</option>
               </select>
               <input className={styles.input} name="batchName" placeholder="Batch name" required />
               <input className={styles.input} name="timing" placeholder="Timing" required />

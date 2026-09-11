@@ -37,6 +37,9 @@ type SortDirection = "asc" | "desc";
 
 type WhereClause = Record<string, unknown>;
 
+const FIRESTORE_READ_CACHE_MS = 3000;
+const firestoreReadCache = new Map<string, { expiresAt: number; rows: unknown[] }>();
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -80,9 +83,20 @@ async function getNextId(collectionName: string): Promise<number> {
 }
 
 async function listCollection<T>(collectionName: string): Promise<T[]> {
+  const cached = firestoreReadCache.get(collectionName);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.rows as T[];
+  }
+
   const db = getDb();
   const snap = await db.collection(collectionName).get();
-  return snap.docs.map((doc) => doc.data() as T);
+  const rows = snap.docs.map((doc) => doc.data() as T);
+  firestoreReadCache.set(collectionName, { expiresAt: Date.now() + FIRESTORE_READ_CACHE_MS, rows });
+  return rows;
+}
+
+function invalidateFirestoreCollection(collectionName: string): void {
+  firestoreReadCache.delete(collectionName);
 }
 
 function stripUndefined(obj: object): object {
@@ -96,6 +110,7 @@ async function createWithId<T extends { id: number }>(collectionName: string, da
   const id = await getNextId(collectionName);
   const payload = stripUndefined({ ...(data as object), id }) as T;
   await db.collection(collectionName).doc(String(id)).set(payload as object);
+  invalidateFirestoreCollection(collectionName);
   return payload;
 }
 
@@ -111,6 +126,7 @@ async function updateById<T>(collectionName: string, id: number, data: Partial<T
   const db = getDb();
   const ref = db.collection(collectionName).doc(String(id));
   await ref.set(stripUndefined(data as object), { merge: true });
+  invalidateFirestoreCollection(collectionName);
   const snap = await ref.get();
   return snap.data() as T;
 }
@@ -118,6 +134,7 @@ async function updateById<T>(collectionName: string, id: number, data: Partial<T
 async function deleteById(collectionName: string, id: number): Promise<void> {
   const db = getDb();
   await db.collection(collectionName).doc(String(id)).delete();
+  invalidateFirestoreCollection(collectionName);
 }
 
 async function includeStudentsParent(students: Student[]): Promise<Array<Student & { parent?: Parent | null }>> {
@@ -260,6 +277,9 @@ const firestorePrisma = {
     },
   },
   teacher: {
+    async findMany(args?: { where?: WhereClause; orderBy?: Record<string, SortDirection> }) {
+      return applyOrder(applyWhere(await listCollection<Teacher>("teachers"), args?.where), args?.orderBy);
+    },
     async count() {
       const rows = await listCollection<Teacher>("teachers");
       return rows.length;
@@ -286,6 +306,12 @@ const firestorePrisma = {
   attendance: {
     async create(args: { data: Omit<Attendance, "id" | "createdAt"> }) {
       return createWithId<Attendance>("attendance", { ...args.data, createdAt: nowIso() });
+    },
+    async update(args: { where: { id: number }; data: Partial<Attendance> }) {
+      return updateById<Attendance>("attendance", args.where.id, { ...args.data });
+    },
+    async delete(args: { where: { id: number } }) {
+      await deleteById("attendance", args.where.id);
     },
     async findMany(args?: {
       where?: WhereClause;

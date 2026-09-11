@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { jwtVerify, SignJWT } from "jose";
 import bcrypt from "bcryptjs";
 import { Role } from "@/lib/types";
@@ -88,7 +89,7 @@ export async function logoutUser(): Promise<void> {
   cookieStore.delete(AUTH_COOKIE);
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
+export const getSession = cache(async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE)?.value;
 
@@ -127,7 +128,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function requireSession(): Promise<SessionPayload> {
   const session = await getSession();

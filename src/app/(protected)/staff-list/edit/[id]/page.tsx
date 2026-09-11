@@ -51,8 +51,10 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const staffId = Number(id);
   const staff = await prisma.staff.findUnique({ where: { id: staffId } });
+  const accountUserId = staff ? staff.userId : staffId >= 1000000 ? staffId - 1000000 : null;
+  const accountUser = !staff && accountUserId ? await prisma.user.findUnique({ where: { id: accountUserId } }) : null;
 
-  if (!staff || staff.status === "INACTIVE") {
+  if ((!staff && !accountUser) || staff?.status === "INACTIVE") {
     return (
       <div className={styles.wrap}>
         <section className={styles.section}>
@@ -63,9 +65,30 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const dobValue = toDateInputValue(staff.dateOfBirth);
-  const joiningValue = toDateInputValue(staff.joiningDate);
-  const selectedRole = roleToOptionValue(staff.role ?? "");
+  const profile = staff ?? {
+    id: staffId,
+    name: accountUser?.name ?? "",
+    status: "ACTIVE" as const,
+    profileImage: null,
+    role: accountUser?.role ?? "STAFF",
+    salary: null,
+    dateOfBirth: null,
+    email: accountUser?.email ?? null,
+    contactNumber: null,
+    emergencyContact: null,
+    address: null,
+    city: null,
+    state: null,
+    qualification: null,
+    experienceYears: null,
+    joiningDate: null,
+    userId: accountUserId,
+    createdAt: accountUser?.createdAt ?? "",
+    updatedAt: accountUser?.updatedAt ?? "",
+  };
+  const dobValue = toDateInputValue(profile.dateOfBirth);
+  const joiningValue = toDateInputValue(profile.joiningDate);
+  const selectedRole = roleToOptionValue(profile.role ?? "");
 
   return (
     <div className={styles.wrap}>
@@ -77,10 +100,11 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
           </Link>
         </div>
         <form action={updateStaff} className={styles.formGrid}>
-          <input type="hidden" name="staffId" value={staff.id} />
-          <input className={styles.input} name="name" defaultValue={staff.name ?? ""} placeholder="Name" required />
-          <ValidatedProfileImageInput className={styles.input} />
-          <select className={styles.select} name="role" defaultValue={selectedRole || ""} required>
+          <input type="hidden" name="staffId" value={profile.id} />
+          <input type="hidden" name="accountUserId" value={accountUserId ?? ""} />
+          <label>Name<input className={styles.input} name="name" defaultValue={profile.name ?? ""} required /></label>
+          <label>Profile image<ValidatedProfileImageInput className={styles.input} /></label>
+          <label>User role<select className={styles.select} name="role" defaultValue={selectedRole || ""} required>
             <option value="" disabled>
               Select user role
             </option>
@@ -89,18 +113,23 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
                 {item.label}
               </option>
             ))}
-          </select>
-          <input className={styles.input} name="salary" type="number" min={0} step="0.01" defaultValue={staff.salary ?? ""} placeholder="Salary" />
-          <input className={styles.input} name="dateOfBirth" type="date" defaultValue={dobValue} />
-          <input className={styles.input} name="email" type="email" defaultValue={staff.email ?? ""} placeholder="Email" />
-          <input className={styles.input} name="contactNumber" defaultValue={staff.contactNumber ?? ""} placeholder="Contact number" />
-          <input className={styles.input} name="emergencyContact" defaultValue={staff.emergencyContact ?? ""} placeholder="Emergency contact" />
-          <input className={styles.input} name="address" defaultValue={staff.address ?? ""} placeholder="Address" />
-          <input className={styles.input} name="city" defaultValue={staff.city ?? ""} placeholder="City" />
-          <input className={styles.input} name="state" defaultValue={staff.state ?? ""} placeholder="State" />
-          <input className={styles.input} name="qualification" defaultValue={staff.qualification ?? ""} placeholder="Qualification" />
-          <input className={styles.input} name="experienceYears" type="number" min={0} defaultValue={staff.experienceYears ?? ""} placeholder="Experience years" />
-          <input className={styles.input} name="joiningDate" type="date" defaultValue={joiningValue} />
+          </select></label>
+          <label>Salary<input className={styles.input} name="salary" type="number" min={0} step="0.01" defaultValue={profile.salary ?? ""} /></label>
+          <label>Date of birth<input className={styles.input} name="dateOfBirth" type="date" defaultValue={dobValue} /></label>
+          <label>Email<input className={styles.input} name="email" type="email" defaultValue={profile.email ?? ""} /></label>
+          <label>Contact number<input className={styles.input} name="contactNumber" defaultValue={profile.contactNumber ?? ""} /></label>
+          <label>Emergency contact<input className={styles.input} name="emergencyContact" defaultValue={profile.emergencyContact ?? ""} /></label>
+          <label>Address<input className={styles.input} name="address" defaultValue={profile.address ?? ""} /></label>
+          <label>City<input className={styles.input} name="city" defaultValue={profile.city ?? ""} /></label>
+          <label>State<input className={styles.input} name="state" defaultValue={profile.state ?? ""} /></label>
+          <label>Qualification<input className={styles.input} name="qualification" defaultValue={profile.qualification ?? ""} /></label>
+          <label>Experience years<input className={styles.input} name="experienceYears" type="number" min={0} defaultValue={profile.experienceYears ?? ""} /></label>
+          <label>Joining date<input className={styles.input} name="joiningDate" type="date" defaultValue={joiningValue} /></label>
+          <label>Bank name<input className={styles.input} name="bankName" defaultValue={profile.bankName ?? ""} /></label>
+          <label>Account holder name<input className={styles.input} name="accountHolderName" defaultValue={profile.accountHolderName ?? ""} /></label>
+          <label>Bank account number<input className={styles.input} name="bankAccountNumber" defaultValue={profile.bankAccountNumber ?? ""} /></label>
+          <label>IFSC code<input className={styles.input} name="bankIfscCode" defaultValue={profile.bankIfscCode ?? ""} /></label>
+          <label>Bank branch<input className={styles.input} name="bankBranch" defaultValue={profile.bankBranch ?? ""} /></label>
           <button className={styles.button} type="submit">Save Changes</button>
         </form>
       </section>

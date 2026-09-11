@@ -10,7 +10,7 @@ export type Role =
   | "PARENT"
   | "STUDENT";
 
-export type CourseType = "MONTESSORI" | "MUSIC" | "TUITION";
+export type CourseType = "MONTESSORI" | "MUSIC" | "NEST" | "PSA";
 export type EnrollmentStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type AttendanceTargetType = "STUDENT" | "STAFF";
 export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE";
@@ -68,6 +68,7 @@ export type Teacher = {
   id: number;
   name: string;
   subject: string;
+  dateOfBirth?: string | null;
   userId?: number | null;
   createdAt: string;
   updatedAt: string;
@@ -90,6 +91,11 @@ export type Staff = {
   qualification?: string | null;
   experienceYears?: number | null;
   joiningDate?: string | null;
+  bankName?: string | null;
+  accountHolderName?: string | null;
+  bankAccountNumber?: string | null;
+  bankIfscCode?: string | null;
+  bankBranch?: string | null;
   userId?: number | null;
   createdAt: string;
   updatedAt: string;
@@ -98,6 +104,7 @@ export type Staff = {
 export type Attendance = {
   id: number;
   userId: number;
+  name?: string | null;
   studentId?: number | null;
   date: string;
   status: AttendanceStatus;

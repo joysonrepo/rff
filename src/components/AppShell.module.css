@@ -36,6 +36,31 @@
   z-index: 99;
 }
 
+.loadingBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  overflow: hidden;
+  background: #d7dfec;
+  z-index: 200;
+}
+
+.loadingBar::after {
+  content: "";
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: linear-gradient(90deg, #f3b84e, #2d4a7a, #f3b84e);
+  animation: rff-loading-bar 1.15s ease-in-out infinite;
+}
+
+@keyframes rff-loading-bar {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(280%); }
+}
+
 .sidebar {
   min-width: 0;
   padding: 1.5rem;

@@ -1,4 +1,5 @@
 import { AccessDenied } from "@/components/AccessDenied";
+import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -38,13 +39,14 @@ function normalizeStudents(students: StudentListRow[]): StudentListRow[] {
   }));
 }
 
-export default async function StudentListPage() {
+export default async function StudentListPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const session = await requireSession();
   if (!canAccess(session.role, "studentList")) {
     return <AccessDenied moduleName="students" />;
   }
 
-  let students = (await prisma.student.findMany({ include: { parent: true }, where: { status: "ACTIVE" }, orderBy: { id: "desc" } })) as StudentListRow[];
+  let students = (await prisma.student.findMany({ include: { parent: true }, orderBy: { id: "desc" } }))
+    .filter((student) => String(student.status ?? "").toUpperCase() !== "INACTIVE") as StudentListRow[];
 
   if (session.role === "PARENT") {
     const parent = await prisma.parent.findUnique({ where: { userId: Number(session.sub) } });
@@ -56,13 +58,31 @@ export default async function StudentListPage() {
   }
 
   students = normalizeStudents(students);
+  const params = await searchParams;
+  const pageSize = 10;
+  const requestedPage = Number.parseInt(params.page ?? "1", 10);
+  const totalPages = Math.max(1, Math.ceil(students.length / pageSize));
+  const currentPage = Number.isFinite(requestedPage) ? Math.min(Math.max(requestedPage, 1), totalPages) : 1;
+  const pageStart = (currentPage - 1) * pageSize;
+  const visibleStudents = students.slice(pageStart, pageStart + pageSize);
   const canManage = session.role === "FOUNDER" || session.role === "ADMIN_MANAGER";
 
   return (
     <div className={styles.wrap}>
       <section className={styles.section}>
-        <h2>Student List</h2>
-        <StudentListTable students={students} showManageActions={canManage} />
+        <div className={styles.listHeader}>
+          <h2>Student List</h2>
+          <nav className={styles.pagination} aria-label="Student list pages">
+            {currentPage > 1 && <Link href={`/student-list?page=${currentPage - 1}`} className={styles.pageLink}>Previous</Link>}
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <Link key={page} href={`/student-list?page=${page}`} className={`${styles.pageLink} ${page === currentPage ? styles.pageLinkActive : ""}`}>
+                {page}
+              </Link>
+            ))}
+            {currentPage < totalPages && <Link href={`/student-list?page=${currentPage + 1}`} className={styles.pageLink}>Next</Link>}
+          </nav>
+        </div>
+        <StudentListTable students={visibleStudents} showManageActions={canManage} />
       </section>
     </div>
   );

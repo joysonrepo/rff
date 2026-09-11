@@ -6,36 +6,31 @@ import { consumeFlashMessage } from "@/lib/flash";
 
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
   const session = await requireSession();
-  const flash = await consumeFlashMessage();
   const userId = Number(session.sub);
+  const flashPromise = consumeFlashMessage();
 
   let profileImage: string | null = null;
   let totalStars: number | undefined = undefined;
+  let flash = null;
 
   if (Number.isFinite(userId) && userId > 0) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const [flashMessage, staff, student] = await Promise.all([
+      flashPromise,
+      session.role === "STUDENT" ? Promise.resolve(null) : prisma.staff.findUnique({ where: { userId } }),
+      session.role === "STUDENT" ? prisma.student.findUnique({ where: { userId } }) : Promise.resolve(null),
+    ]);
 
-    if (!profileImage && user) {
-      const [staffRows, studentRows] = await Promise.all([
-        prisma.staff.findMany({ where: { status: "ACTIVE" } }),
-        prisma.student.findMany({ where: { status: "ACTIVE" } }),
-      ]);
-
-      const staffMatch = staffRows.find(
-        (staff) => staff.userId === user.id || staff.email === user.email || staff.name === user.name,
-      );
-      const studentMatch = studentRows.find((student) => student.userId === user.id || student.name === user.name);
-
-      profileImage = staffMatch?.profileImage?.trim() || studentMatch?.profileImage?.trim() || null;
-
-      if (session.role === "STUDENT" && studentMatch) {
-        const agg = await prisma.taskAssignment.aggregate({
-          where: { studentId: studentMatch.id, status: "APPROVED" },
-          _sum: { starsAwarded: true },
-        });
-        totalStars = agg._sum.starsAwarded ?? 0;
-      }
+    flash = flashMessage;
+    profileImage = staff?.profileImage?.trim() || student?.profileImage?.trim() || null;
+    if (session.role === "STUDENT" && student) {
+      const agg = await prisma.taskAssignment.aggregate({
+        where: { studentId: student.id, status: "APPROVED" },
+        _sum: { starsAwarded: true },
+      });
+      totalStars = agg._sum.starsAwarded ?? 0;
     }
+  } else {
+    flash = await flashPromise;
   }
 
   return (

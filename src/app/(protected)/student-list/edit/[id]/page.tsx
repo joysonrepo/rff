@@ -61,29 +61,30 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
         </div>
         <form action={updateStudent} className={styles.formGrid}>
           <input type="hidden" name="studentId" value={student.id} />
-          <input className={styles.input} name="name" defaultValue={student.name ?? ""} placeholder="Name" required />
-          <ValidatedProfileImageInput className={styles.input} />
-          <input className={styles.input} name="className" defaultValue={student.className ?? ""} placeholder="Class" />
-          <input className={styles.input} name="howDidYouHear" defaultValue={student.howDidYouHear ?? ""} placeholder="How did you hear about us" />
-          <input className={styles.input} name="enquiryStatus" defaultValue={student.enquiryStatus ?? ""} placeholder="Enquiry status" />
-          <input className={styles.input} name="dateOfBirth" type="date" defaultValue={dobValue} />
-          <input className={styles.input} name="age" type="number" min={2} defaultValue={student.age ?? 0} placeholder="Age" required />
-          <input className={styles.input} name="city" defaultValue={student.city ?? ""} placeholder="City" />
-          <input className={styles.input} name="state" defaultValue={student.state ?? ""} placeholder="State" />
-          <input className={styles.input} name="residentialAddress" defaultValue={student.residentialAddress ?? ""} placeholder="Residential address" />
-          <input className={styles.input} name="permanentAddress" defaultValue={student.permanentAddress ?? ""} placeholder="Permanent address" />
-          <input className={styles.input} name="fatherName" defaultValue={student.fatherName ?? ""} placeholder="Father's name" />
-          <input className={styles.input} name="fatherEmail" type="email" defaultValue={student.fatherEmail ?? ""} placeholder="Father's email" />
-          <input className={styles.input} name="fatherMobile" defaultValue={student.fatherMobile ?? ""} placeholder="Father's mobile" />
-          <input className={styles.input} name="motherName" defaultValue={student.motherName ?? ""} placeholder="Mother's name" />
-          <input className={styles.input} name="motherEmail" type="email" defaultValue={student.motherEmail ?? ""} placeholder="Mother's email" />
-          <input className={styles.input} name="motherMobile" defaultValue={student.motherMobile ?? ""} placeholder="Mother's mobile" />
-          <input className={styles.input} name="feeOffered" type="number" min={0} step="0.01" defaultValue={student.feeOffered ?? ""} placeholder="Fee offered" />
-          <select className={styles.select} name="course" defaultValue={student.course ?? "MONTESSORI"}>
+          <label>Name<input className={styles.input} name="name" defaultValue={student.name ?? ""} required /></label>
+          <label>Profile image<ValidatedProfileImageInput className={styles.input} /></label>
+          <label>Class<input className={styles.input} name="className" defaultValue={student.className ?? ""} /></label>
+          <label>How did you hear about us<input className={styles.input} name="howDidYouHear" defaultValue={student.howDidYouHear ?? ""} /></label>
+          <label>Enquiry status<input className={styles.input} name="enquiryStatus" defaultValue={student.enquiryStatus ?? ""} /></label>
+          <label>Date of birth<input className={styles.input} name="dateOfBirth" type="date" defaultValue={dobValue} /></label>
+          <label>Age<input className={styles.input} name="age" type="number" min={2} defaultValue={student.age ?? 0} required /></label>
+          <label>City<input className={styles.input} name="city" defaultValue={student.city ?? ""} /></label>
+          <label>State<input className={styles.input} name="state" defaultValue={student.state ?? ""} /></label>
+          <label>Residential address<input className={styles.input} name="residentialAddress" defaultValue={student.residentialAddress ?? ""} /></label>
+          <label>Permanent address<input className={styles.input} name="permanentAddress" defaultValue={student.permanentAddress ?? ""} /></label>
+          <label>Father&apos;s name<input className={styles.input} name="fatherName" defaultValue={student.fatherName ?? ""} /></label>
+          <label>Father&apos;s email<input className={styles.input} name="fatherEmail" type="email" defaultValue={student.fatherEmail ?? ""} /></label>
+          <label>Father&apos;s mobile<input className={styles.input} name="fatherMobile" defaultValue={student.fatherMobile ?? ""} /></label>
+          <label>Mother&apos;s name<input className={styles.input} name="motherName" defaultValue={student.motherName ?? ""} /></label>
+          <label>Mother&apos;s email<input className={styles.input} name="motherEmail" type="email" defaultValue={student.motherEmail ?? ""} /></label>
+          <label>Mother&apos;s mobile<input className={styles.input} name="motherMobile" defaultValue={student.motherMobile ?? ""} /></label>
+          <label>Fee offered<input className={styles.input} name="feeOffered" type="number" min={0} step="0.01" defaultValue={student.feeOffered ?? ""} /></label>
+          <label>Course<select className={styles.select} name="course" defaultValue={student.course ?? "MONTESSORI"}>
             <option value="MONTESSORI">Montessori</option>
             <option value="MUSIC">Music</option>
-            <option value="TUITION">Tuition</option>
-          </select>
+            <option value="NEST">Nest</option>
+            <option value="PSA">PSA</option>
+          </select></label>
           <button className={styles.button} type="submit">Save Changes</button>
         </form>
       </section>

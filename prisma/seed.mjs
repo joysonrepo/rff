@@ -18,7 +18,8 @@ const Role = {
 const CourseType = {
   MONTESSORI: "MONTESSORI",
   MUSIC: "MUSIC",
-  TUITION: "TUITION",
+  NEST: "NEST",
+  PSA: "PSA",
 };
 
 const EnrollmentStatus = {
@@ -74,8 +75,8 @@ async function main() {
 
   const teacher = await prisma.teacher.upsert({
     where: { userId: teacherUser.id },
-    update: { name: "Teacher Mira", subject: "Music" },
-    create: { name: "Teacher Mira", subject: "Music", userId: teacherUser.id },
+    update: { name: "Teacher Mira", subject: "Music", dateOfBirth: new Date("1990-06-15") },
+    create: { name: "Teacher Mira", subject: "Music", dateOfBirth: new Date("1990-06-15"), userId: teacherUser.id },
   });
 
   const montessori = await prisma.course.upsert({
@@ -125,7 +126,7 @@ async function main() {
       motherMobile: "+91-9000000002",
       feeOffered: 5000,
       parentId: parent.id,
-      course: CourseType.MONTESSORI,
+      course: CourseType.PSA,
       batchId: batch.id,
     },
     create: {
@@ -248,6 +249,7 @@ async function main() {
   await prisma.attendance.create({
     data: {
       userId: studentUser.id,
+      name: student.name,
       studentId: student.id,
       date: new Date(),
       status: AttendanceStatus.PRESENT,

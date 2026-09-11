@@ -64,7 +64,8 @@ export default function EnrollmentPage() {
             <select name="course" required style={inputStyle}>
               <option value="MONTESSORI">Montessori</option>
               <option value="MUSIC">Music</option>
-              <option value="TUITION">Tuition</option>
+              <option value="NEST">Nest</option>
+              <option value="PSA">PSA</option>
             </select>
           </Field>
         </div>

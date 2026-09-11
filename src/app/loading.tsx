@@ -1,5 +1,5 @@
 import { RouteLoading } from "@/components/RouteLoading";
 
-export default function ProtectedLoading() {
+export default function Loading() {
   return <RouteLoading />;
 }

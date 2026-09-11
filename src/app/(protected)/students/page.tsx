@@ -46,7 +46,8 @@ export default async function StudentsPage() {
     return <AccessDenied moduleName="students" />;
   }
 
-  let students = await prisma.student.findMany({ include: { parent: true }, where: { status: "ACTIVE" }, orderBy: { id: "desc" } });
+  let students = (await prisma.student.findMany({ include: { parent: true }, orderBy: { id: "desc" } }))
+    .filter((student) => String(student.status ?? "").toUpperCase() !== "INACTIVE");
 
   if (session.role === "PARENT") {
     const parent = await prisma.parent.findUnique({ where: { userId: Number(session.sub) } });
@@ -68,44 +69,45 @@ export default async function StudentsPage() {
               <h2 className={styles.collapsibleTitle}>Add Student</h2>
             </summary>
             <div className={styles.collapsibleBody}>
-              <form action={addStudent} className={styles.formGrid}>
-                <input className={styles.input} name="name" placeholder="Name" required />
-                <ValidatedProfileImageInput className={styles.input} />
-                <input className={styles.input} name="className" placeholder="Class" required />
-                <select className={styles.select} name="howDidYouHear" required>
+              <form action={addStudent} className={styles.formGrid} autoComplete="off">
+                <label>Name<input className={styles.input} name="name" required /></label>
+                <label>Profile image<ValidatedProfileImageInput className={styles.input} /></label>
+                <label>Class<input className={styles.input} name="className" required /></label>
+                <label>How did you hear about us<select className={styles.select} name="howDidYouHear" required>
                   <option value="">How did you hear about us?</option>
                   <option value="SOCIAL_MEDIA">Social media</option>
                   <option value="FRIEND_REFERRAL">Friend referral</option>
                   <option value="WALK_IN">Walk-in</option>
                   <option value="ONLINE_SEARCH">Online search</option>
                   <option value="OTHER">Other</option>
-                </select>
-                <select className={styles.select} name="enquiryStatus" required>
+                </select></label>
+                <label>Enquiry status<select className={styles.select} name="enquiryStatus" required>
                   <option value="">Enquiry status</option>
                   <option value="NEW">New</option>
                   <option value="FOLLOW_UP">Follow-up</option>
                   <option value="CONVERTED">Converted</option>
-                </select>
-                <input className={styles.input} name="dateOfBirth" type="date" required />
-                <input className={styles.input} name="age" placeholder="Age" type="number" min={2} required />
-                <input className={styles.input} name="city" placeholder="City" required />
-                <input className={styles.input} name="state" placeholder="State" required />
-                <input className={styles.input} name="residentialAddress" placeholder="Residential address" required />
-                <input className={styles.input} name="permanentAddress" placeholder="Permanent address" required />
-                <input className={styles.input} name="fatherName" placeholder="Father's name" required />
-                <input className={styles.input} name="fatherEmail" placeholder="Father's email" type="email" required />
-                <input className={styles.input} name="fatherMobile" placeholder="Father's mobile no." required />
-                <input className={styles.input} name="motherName" placeholder="Mother's name" required />
-                <input className={styles.input} name="motherEmail" placeholder="Mother's email" type="email" required />
-                <input className={styles.input} name="motherMobile" placeholder="Mother's mobile no." required />
-                <input className={styles.input} name="feeOffered" placeholder="Fees" type="number" min={0} step="0.01" required />
-                <input className={styles.input} name="username" placeholder="Student username" required />
-                <input className={styles.input} name="password" type="password" placeholder="Student password" required />
-                <select className={styles.select} name="course">
+                </select></label>
+                <label>Date of birth<input className={styles.input} name="dateOfBirth" type="date" required /></label>
+                <label>Age<input className={styles.input} name="age" type="number" min={2} required /></label>
+                <label>City<input className={styles.input} name="city" required /></label>
+                <label>State<input className={styles.input} name="state" required /></label>
+                <label>Residential address<input className={styles.input} name="residentialAddress" required /></label>
+                <label>Permanent address<input className={styles.input} name="permanentAddress" required /></label>
+                <label>Father&apos;s name<input className={styles.input} name="fatherName" required /></label>
+                <label>Father&apos;s email<input className={styles.input} name="fatherEmail" type="email" required /></label>
+                <label>Father&apos;s mobile number<input className={styles.input} name="fatherMobile" required /></label>
+                <label>Mother&apos;s name<input className={styles.input} name="motherName" required /></label>
+                <label>Mother&apos;s email<input className={styles.input} name="motherEmail" type="email" required /></label>
+                <label>Mother&apos;s mobile number<input className={styles.input} name="motherMobile" required /></label>
+                <label>Fee offered<input className={styles.input} name="feeOffered" type="number" min={0} step="0.01" required /></label>
+                <label>Student username<input className={styles.input} name="username" autoComplete="new-username" required /></label>
+                <label>Student password<input className={styles.input} name="password" type="password" autoComplete="new-password" required /></label>
+                <label>Course<select className={styles.select} name="course">
                   <option value="MONTESSORI">Montessori</option>
                   <option value="MUSIC">Music</option>
-                  <option value="TUITION">Tuition</option>
-                </select>
+                  <option value="NEST">Nest</option>
+                  <option value="PSA">PSA</option>
+                </select></label>
                 <button className={styles.button} type="submit">
                   Save Student
                 </button>

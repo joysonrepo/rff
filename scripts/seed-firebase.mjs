@@ -55,17 +55,18 @@ async function main() {
   ];
 
   const parents = [{ id: 1, name: "Parent Ravi", contact: "+91-9000000001", userId: 8, createdAt: now, updatedAt: now }];
-  const teachers = [{ id: 1, name: "Teacher Mira", subject: "Music", userId: 7, createdAt: now, updatedAt: now }];
-  const students = [{ id: 1, name: "Student Arul", age: 8, status: "ACTIVE", userId: 9, parentId: 1, course: "TUITION", batchId: 1, createdAt: now, updatedAt: now }];
+  const teachers = [{ id: 1, name: "Teacher Mira", subject: "Music", dateOfBirth: "1990-06-15T00:00:00.000Z", userId: 7, createdAt: now, updatedAt: now }];
+  const students = [{ id: 1, name: "Student Arul", age: 8, status: "ACTIVE", userId: 9, parentId: 1, course: "PSA", batchId: 1, createdAt: now, updatedAt: now }];
   const staff = [{ id: 1, name: "Keerthi", role: "Coordinator", salary: null, status: "ACTIVE", createdAt: now, updatedAt: now }];
   const courses = [
     { id: 1, name: "Montessori Foundation", type: "MONTESSORI", createdAt: now },
     { id: 2, name: "Music Basics", type: "MUSIC", createdAt: now },
-    { id: 3, name: "Evening Tuition", type: "TUITION", createdAt: now },
+    { id: 3, name: "PSA Program", type: "PSA", createdAt: now },
+    { id: 4, name: "Nest Program", type: "NEST", createdAt: now },
   ];
   const batches = [{ id: 1, name: "Morning Stars", courseId: 1, teacherId: 1, timing: "9:00 AM - 11:00 AM", createdAt: now }];
   const enrollments = [{ id: 1, name: "New Child", parentName: "Suresh", email: "suresh.parent@example.com", age: 7, course: "MUSIC", status: "PENDING", notes: "Interested in weekend batch", createdAt: now }];
-  const attendance = [{ id: 1, userId: 9, studentId: 1, date: now, status: "PRESENT", targetType: "STUDENT", markedById: 7, notes: "On time", createdAt: now }];
+  const attendance = [{ id: 1, userId: 9, name: "Student Arul", studentId: 1, date: now, status: "PRESENT", targetType: "STUDENT", markedById: 7, notes: "On time", createdAt: now }];
   const marks = [{ id: 1, studentId: 1, subject: "Mathematics", marks: 86, examType: "Unit Test", createdAt: now }];
   const fees = [{ id: 1, studentId: 1, amount: 5000, status: "PARTIAL", paidOn: now, receiptNo: "RFF-1001", createdAt: now }];
   const events = [{ id: 1, name: "Summer Discovery Camp", date: new Date(Date.now() + 864000000).toISOString(), description: "A hands-on camp with science, music, and art stations.", registrations: 22, createdAt: now }];

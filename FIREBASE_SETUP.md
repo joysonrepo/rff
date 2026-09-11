@@ -27,6 +27,8 @@ Set these in your local .env and deployment platform:
 - FIREBASE_CLIENT_EMAIL
 - FIREBASE_PRIVATE_KEY
 
+The application uses Firestore only when all three Firebase Admin credentials are present. If they are absent, local development uses SQLite through DATABASE_URL, so records written locally will not appear in the Firebase Console. Copy .env.example to .env and replace the Firebase placeholder values to make local writes go to Firestore.
+
 Important: FIREBASE_PRIVATE_KEY must preserve line breaks. If using one line, use escaped \n.
 
 ## 5. Seed documents in Firestore

@@ -113,6 +113,7 @@ model Teacher {
   id        Int      @id @default(autoincrement())
   name      String
   subject   String
+  dateOfBirth DateTime?
   userId    Int?     @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -136,6 +137,11 @@ model Staff {
   qualification    String?
   experienceYears  Int?
   joiningDate      DateTime?
+  bankName         String?
+  accountHolderName String?
+  bankAccountNumber String?
+  bankIfscCode     String?
+  bankBranch       String?
   userId           Int?      @unique
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -146,6 +152,7 @@ model Staff {
 model Attendance {
   id         Int      @id @default(autoincrement())
   userId     Int
+  name       String?
   studentId  Int?
   date       DateTime
   status     String

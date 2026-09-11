@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { AttendanceEntryForm } from "@/components/AttendanceEntryForm";
+import { GroupAttendanceForm } from "@/components/GroupAttendanceForm";
 import styles from "../module.module.css";
 
 type AttendanceUserRow = {
@@ -14,12 +15,16 @@ type AttendanceUserRow = {
 type AttendanceStudentRow = {
   id: number;
   name: string;
+  status?: string | null;
   userId?: number | null;
+  className?: string | null;
+  course: string;
 };
 
 type AttendanceRecordRow = {
   id: number;
   userId: number;
+  name?: string | null;
   date: string | Date;
   status: string;
   targetType: string;
@@ -43,7 +48,7 @@ export default async function AttendancePage() {
   const [records, users, students] = await Promise.all([
     prisma.attendance.findMany({ include: { user: true, student: true }, orderBy: { date: "desc" }, take: 40 }),
     prisma.user.findMany({ select: { id: true, name: true, role: true } }),
-    prisma.student.findMany({ select: { id: true, name: true, userId: true }, where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
+    prisma.student.findMany({ select: { id: true, name: true, userId: true, className: true, course: true }, orderBy: { name: "asc" } }),
   ]);
 
   const typedUsers = users as AttendanceUserRow[];
@@ -86,6 +91,10 @@ export default async function AttendancePage() {
         ? typedRecords.filter((record) => record.userId === Number(session.sub))
         : typedRecords;
 
+  const groupStudents = typedStudents
+    .filter((student) => String(student.status ?? "").toUpperCase() !== "INACTIVE" && Boolean(student.userId))
+    .map((student) => ({ id: student.id, name: student.name, className: student.className?.trim() ?? "", course: student.course }));
+
   return (
     <div className={styles.wrap}>
       {(session.role === "FOUNDER" || session.role === "TEACHER" || session.role === "HR" || session.role === "ADMIN_MANAGER" || session.role === "STAFF") && (
@@ -95,7 +104,13 @@ export default async function AttendancePage() {
               <h2 className={styles.collapsibleTitle}>Mark Attendance</h2>
             </summary>
             <div className={styles.collapsibleBody}>
-              <AttendanceEntryForm candidates={attendanceCandidates} defaultDate={todayValue()} allowedTargetTypes={[...allowedTargetTypes]} />
+              <GroupAttendanceForm students={groupStudents} defaultDate={todayValue()} />
+              <details style={{ marginTop: "1rem" }}>
+                <summary style={{ cursor: "pointer", color: "#1f2a44", fontWeight: 600 }}>Individual attendance</summary>
+                <div style={{ marginTop: "0.85rem" }}>
+                  <AttendanceEntryForm candidates={attendanceCandidates} defaultDate={todayValue()} allowedTargetTypes={[...allowedTargetTypes]} />
+                </div>
+              </details>
             </div>
           </details>
         </section>
@@ -115,7 +130,7 @@ export default async function AttendancePage() {
             {filteredRecords.map((record) => (
               <tr key={record.id}>
                 <td>{new Date(record.date).toLocaleDateString()}</td>
-                <td>{record.user.name}</td>
+                <td>{record.name ?? record.user.name}</td>
                 <td>{record.status}</td>
                 <td>{record.targetType}</td>
                 <td>{record.notes ?? "-"}</td>

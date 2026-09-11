@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Fee, Student } from "@/lib/types";
 
-const MONTHLY_FEE_COURSES = new Set(["MUSIC", "TUITION"]);
+const MONTHLY_FEE_COURSES = new Set(["MUSIC", "PSA"]);
 const RESOLVED_RETENTION_DAYS = 60;
 const MONTH_KEY_PATTERN = /\((\d{4}-\d{2})\)$/;
 
