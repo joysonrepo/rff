@@ -41,7 +41,7 @@ type StudentOption = { id: number; name: string };
 
 export default async function AchievementsPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "achievements")) {
+  if (!(await canAccess(session.role, "achievements"))) {
     return <AccessDenied moduleName="achievements" />;
   }
 

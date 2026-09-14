@@ -11,6 +11,7 @@ const Role = {
   ACCOUNTS: "ACCOUNTS",
   PRINCIPAL: "PRINCIPAL",
   TEACHER: "TEACHER",
+  STAFF: "STAFF",
   PARENT: "PARENT",
   STUDENT: "STUDENT",
 };
@@ -20,6 +21,7 @@ const CourseType = {
   MUSIC: "MUSIC",
   NEST: "NEST",
   PSA: "PSA",
+  TUITION: "TUITION",
 };
 
 const EnrollmentStatus = {
@@ -40,6 +42,52 @@ const FeeStatus = {
 
 const prisma = new PrismaClient();
 
+const roleRows = [
+  [1, Role.STUDENT],
+  [2, Role.PARENT],
+  [3, Role.TEACHER],
+  [4, Role.STAFF],
+  [5, Role.PRINCIPAL],
+  [6, Role.ACCOUNTS],
+  [7, Role.HR],
+  [8, Role.ADMIN_MANAGER],
+  [9, Role.BOARD_DIRECTOR],
+  [10, Role.FOUNDER],
+];
+
+const pageRows = [
+  [1, "dashboard", "Dashboard", "/dashboard"],
+  [2, "students", "Students", "/students"],
+  [3, "studentList", "Student List", "/student-list"],
+  [4, "staff", "Staff", "/staff"],
+  [5, "staffList", "Staff List", "/staff-list"],
+  [6, "attendance", "Attendance", "/attendance"],
+  [7, "news", "Newslet", "/news"],
+  [8, "fees", "Fees", "/fees"],
+  [9, "reports", "Reports", "/reports"],
+  [10, "homework", "Homework", "/homework"],
+  [11, "events", "Events", "/events"],
+  [12, "settings", "Settings", "/settings"],
+  [13, "enrollments", "Enrollments", "/enrollments"],
+  [14, "courses", "Courses & Batches", "/courses"],
+  [15, "notifications", "Notifications", "/notifications"],
+  [16, "marks", "Marks", "/marks"],
+  [17, "achievements", "Achievements", "/achievements"],
+];
+
+const accessByRole = {
+  FOUNDER: ["dashboard", "students", "studentList", "staff", "staffList", "attendance", "homework", "news", "fees", "reports", "events", "settings", "enrollments", "courses", "notifications", "marks", "achievements"],
+  BOARD_DIRECTOR: ["dashboard", "news", "reports"],
+  ADMIN_MANAGER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "events", "enrollments", "courses", "notifications"],
+  HR: ["dashboard", "staff", "staffList", "attendance", "news", "reports"],
+  ACCOUNTS: ["dashboard", "fees", "news", "reports", "staff", "staffList"],
+  PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "reports", "events"],
+  TEACHER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
+  STAFF: ["dashboard", "attendance", "news", "events", "notifications", "marks"],
+  PARENT: ["dashboard", "students", "studentList", "attendance", "news", "marks", "fees", "events", "notifications"],
+  STUDENT: ["dashboard", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
+};
+
 const users = [
   ["Founder", "founder@rolfunfactory.com", Role.FOUNDER],
   ["Board Director", "board@rolfunfactory.com", Role.BOARD_DIRECTOR],
@@ -54,6 +102,21 @@ const users = [
 
 async function main() {
   const password = await bcrypt.hash("Welcome@123", 12);
+
+  for (const [id, name] of roleRows) {
+    await prisma.role.upsert({ where: { id }, update: { name }, create: { id, name } });
+  }
+  for (const [id, key, label, route] of pageRows) {
+    await prisma.page.upsert({ where: { id }, update: { key, label, route }, create: { id, key, label, route } });
+  }
+  await prisma.pageAccess.deleteMany();
+  for (const [roleName, pageKeys] of Object.entries(accessByRole)) {
+    const role = roleRows.find(([, name]) => name === roleName);
+    for (const pageKey of pageKeys) {
+      const page = pageRows.find(([, key]) => key === pageKey);
+      await prisma.pageAccess.create({ data: { pageId: page[0], roleId: role[0] } });
+    }
+  }
 
   for (const [name, email, role] of users) {
     await prisma.user.upsert({

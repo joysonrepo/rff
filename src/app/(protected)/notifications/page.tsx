@@ -28,7 +28,7 @@ function formatNotificationStatus(status: unknown): string {
 
 export default async function NotificationsPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "notifications")) {
+  if (!(await canAccess(session.role, "notifications"))) {
     return <AccessDenied moduleName="notifications" />;
   }
 

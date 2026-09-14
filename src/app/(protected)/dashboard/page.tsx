@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { AccessDenied } from "@/components/AccessDenied";
 import { canAccess } from "@/lib/permissions";
 import { requireSession } from "@/lib/auth";
 import styles from "../module.module.css";
@@ -65,6 +66,9 @@ function birthdayLabel(value: BirthdayValue): string {
 
 export default async function DashboardPage() {
   const session = await requireSession();
+  if (!(await canAccess(session.role, "dashboard"))) {
+    return <AccessDenied moduleName="dashboard" />;
+  }
 
   const [studentCount, staffCount, teacherCount, pendingEnrollments, feeAggregate, studentsWithBirthdays, staffWithBirthdays, teachersWithBirthdays] = await Promise.all([
     prisma.student.count(),
@@ -105,12 +109,19 @@ export default async function DashboardPage() {
     return true;
   });
 
+  const [studentsAccess, staffAccess, attendanceAccess, feesAccess, reportsAccess] = await Promise.all([
+    canAccess(session.role, "students"),
+    canAccess(session.role, "staff"),
+    canAccess(session.role, "attendance"),
+    canAccess(session.role, "fees"),
+    canAccess(session.role, "reports"),
+  ]);
   const accessSummary = {
-    students: canAccess(session.role, "students"),
-    staff: canAccess(session.role, "staff"),
-    attendance: canAccess(session.role, "attendance"),
-    fees: canAccess(session.role, "fees"),
-    reports: canAccess(session.role, "reports"),
+    students: studentsAccess,
+    staff: staffAccess,
+    attendance: attendanceAccess,
+    fees: feesAccess,
+    reports: reportsAccess,
   };
 
   return (

@@ -41,7 +41,7 @@ function normalizeStudents(students: StudentListRow[]): StudentListRow[] {
 
 export default async function StudentListPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const session = await requireSession();
-  if (!canAccess(session.role, "studentList")) {
+  if (!(await canAccess(session.role, "studentList"))) {
     return <AccessDenied moduleName="students" />;
   }
 

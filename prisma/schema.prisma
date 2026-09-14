@@ -28,6 +28,34 @@ model User {
   teacher          Teacher?
 }
 
+model Page {
+  id          Int          @id
+  key         String       @unique
+  label       String
+  route       String       @unique
+  createdAt   DateTime     @default(now())
+  accesses    PageAccess[]
+}
+
+model Role {
+  id          Int          @id
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  accesses    PageAccess[]
+}
+
+model PageAccess {
+  id          Int      @id @default(autoincrement())
+  pageId      Int
+  roleId      Int
+  createdAt   DateTime @default(now())
+  page        Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  role        Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, roleId])
+  @@index([roleId])
+}
+
 model Parent {
   id        Int       @id @default(autoincrement())
   name      String

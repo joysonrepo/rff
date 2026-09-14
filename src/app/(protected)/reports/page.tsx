@@ -17,7 +17,7 @@ function csvEscape(value: string): string {
 
 export default async function ReportsPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "reports")) {
+  if (!(await canAccess(session.role, "reports"))) {
     return <AccessDenied moduleName="reports" />;
   }
 

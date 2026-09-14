@@ -3,6 +3,7 @@ import { AccessDenied } from "@/components/AccessDenied";
 import { ValidatedProfileImageInput } from "@/components/ValidatedProfileImageInput";
 import { updateStudent } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
+import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/(protected)/module.module.css";
 
@@ -29,7 +30,7 @@ function toDateInputValue(value: unknown): string {
 
 export default async function EditStudentPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSession();
-  if (!(session.role === "FOUNDER" || session.role === "ADMIN_MANAGER")) {
+  if (!(await canAccess(session.role, "studentList")) || !(session.role === "FOUNDER" || session.role === "ADMIN_MANAGER")) {
     return <AccessDenied moduleName="students" />;
   }
 

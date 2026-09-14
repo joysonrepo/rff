@@ -10,6 +10,27 @@ export type Role =
   | "PARENT"
   | "STUDENT";
 
+export type Page = {
+  id: number;
+  key: string;
+  label: string;
+  route: string;
+  createdAt: string;
+};
+
+export type RoleRecord = {
+  id: number;
+  name: Role;
+  createdAt: string;
+};
+
+export type PageAccess = {
+  id: number;
+  pageId: number;
+  roleId: number;
+  createdAt: string;
+};
+
 export type CourseType = "MONTESSORI" | "MUSIC" | "NEST" | "PSA";
 export type EnrollmentStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type AttendanceTargetType = "STUDENT" | "STAFF";

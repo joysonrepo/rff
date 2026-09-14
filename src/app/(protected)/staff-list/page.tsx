@@ -107,7 +107,7 @@ function mapUsersIntoStaffRows(staffRows: Staff[], users: User[]): StaffListRow[
 
 export default async function StaffListPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const session = await requireSession();
-  if (!canAccess(session.role, "staffList")) {
+  if (!(await canAccess(session.role, "staffList"))) {
     return <AccessDenied moduleName="staff" />;
   }
 

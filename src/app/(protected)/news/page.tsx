@@ -34,7 +34,7 @@ function toDateLabel(value: string | Date): string {
 
 export default async function NewsPage({ searchParams }: NewsPageProps) {
   const session = await requireSession();
-  if (!canAccess(session.role, "news")) {
+  if (!(await canAccess(session.role, "news"))) {
     return <AccessDenied moduleName="news" />;
   }
 

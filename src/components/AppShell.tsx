@@ -59,8 +59,8 @@ const labelMap: Record<AppModule, string> = {
   achievements: "🌟 Achievements",
 };
 
-export function AppShell({ role, name, profileImage, flash, totalStars, children }: AppShellProps) {
-  const allowedModules = getAllowedModules(role);
+export async function AppShell({ role, name, profileImage, flash, totalStars, children }: AppShellProps) {
+  const allowedModules = await getAllowedModules(role);
   const canSeeStudentsMenu = allowedModules.includes("students") || allowedModules.includes("studentList");
   const canSeeStaffMenu = allowedModules.includes("staff") || allowedModules.includes("staffList");
   const resolvedProfileImage = typeof profileImage === "string" && profileImage.trim() ? profileImage.trim() : null;

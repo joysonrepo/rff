@@ -47,7 +47,7 @@ function normalizeStaff(staff: Staff[]): Staff[] {
 
 export default async function StaffPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "staff")) {
+  if (!(await canAccess(session.role, "staff"))) {
     return <AccessDenied moduleName="staff" />;
   }
 

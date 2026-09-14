@@ -53,8 +53,8 @@ async function redirectToReferrer(fallbackPath: string): Promise<never> {
   redirect(fallbackPath);
 }
 
-function ensureAccess(moduleName: Parameters<typeof canAccess>[1], role: Role): void {
-  if (!canAccess(role, moduleName)) {
+async function ensureAccess(moduleName: Parameters<typeof canAccess>[1], role: Role): Promise<void> {
+  if (!(await canAccess(role, moduleName))) {
     throw new Error("You do not have permission for this module.");
   }
 }
@@ -143,7 +143,7 @@ async function getOptionalImageDataUrl(formData: FormData, key: string): Promise
 export async function addStudent(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("students", session.role);
+    await ensureAccess("students", session.role);
 
   const name = String(formData.get("name") ?? "").trim();
   const className = getOptionalString(formData, "className");
@@ -227,7 +227,7 @@ export async function addStudent(formData: FormData) {
 export async function addStaff(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("staff", session.role);
+    await ensureAccess("staff", session.role);
 
     const name = String(formData.get("name") ?? "").trim();
     const profileImage = await getOptionalImageDataUrl(formData, "profileImage");
@@ -312,7 +312,7 @@ export async function addStaff(formData: FormData) {
 export async function addAttendance(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("attendance", session.role);
+    await ensureAccess("attendance", session.role);
 
   const userId = Number(formData.get("userId") ?? 0);
   const studentIdValue = String(formData.get("studentId") ?? "").trim();
@@ -377,7 +377,7 @@ export async function addAttendance(formData: FormData) {
 export async function markGroupAttendance(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("attendance", session.role);
+    await ensureAccess("attendance", session.role);
 
   const groupName = String(formData.get("groupName") ?? "").trim();
   const course = String(formData.get("course") ?? "").trim();
@@ -462,7 +462,7 @@ export async function markGroupAttendance(formData: FormData) {
 export async function addFee(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("fees", session.role);
+    await ensureAccess("fees", session.role);
 
   const studentId = Number(formData.get("studentId") ?? 0);
   const amount = Number(formData.get("amount") ?? 0);
@@ -513,7 +513,7 @@ export async function addFee(formData: FormData) {
 export async function addEvent(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("events", session.role);
+    await ensureAccess("events", session.role);
 
     const name = String(formData.get("name") ?? "").trim();
     const date = String(formData.get("date") ?? "").trim();
@@ -598,7 +598,7 @@ export async function addEnrollment(formData: FormData) {
 export async function reviewEnrollment(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("enrollments", session.role);
+    await ensureAccess("enrollments", session.role);
 
   const enrollmentId = Number(formData.get("enrollmentId") ?? 0);
   const status = String(formData.get("status") ?? "PENDING") as EnrollmentStatus;
@@ -651,7 +651,7 @@ export async function reviewEnrollment(formData: FormData) {
 export async function deactivateStudent(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("students", session.role);
+    await ensureAccess("students", session.role);
 
   const studentId = Number(formData.get("studentId") ?? 0);
   if (!studentId) {
@@ -674,7 +674,7 @@ export async function deactivateStudent(formData: FormData) {
 export async function deactivateStaff(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("staff", session.role);
+    await ensureAccess("staff", session.role);
 
     const staffId = Number(formData.get("staffId") ?? 0);
     const accountUserId = Number(formData.get("accountUserId") ?? 0) || null;
@@ -705,7 +705,7 @@ export async function deactivateStaff(formData: FormData) {
 export async function updateStudent(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("students", session.role);
+    await ensureAccess("students", session.role);
 
   const studentId = Number(formData.get("studentId") ?? 0);
   const name = String(formData.get("name") ?? "").trim();
@@ -773,7 +773,7 @@ export async function updateStudent(formData: FormData) {
 export async function updateStaff(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("staff", session.role);
+    await ensureAccess("staff", session.role);
 
     const staffId = Number(formData.get("staffId") ?? 0);
     const accountUserId = Number(formData.get("accountUserId") ?? 0) || null;
@@ -891,7 +891,7 @@ export async function updateStaff(formData: FormData) {
 export async function addCourseBatch(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("courses", session.role);
+    await ensureAccess("courses", session.role);
 
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "MONTESSORI") as CourseType;
@@ -917,7 +917,7 @@ export async function addCourseBatch(formData: FormData) {
 export async function addMark(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("marks", session.role);
+    await ensureAccess("marks", session.role);
 
     const studentId = Number(formData.get("studentId") ?? 0);
     const subject = String(formData.get("subject") ?? "").trim();
@@ -950,7 +950,7 @@ export async function addMark(formData: FormData) {
 export async function addHomework(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("homework", session.role);
+    await ensureAccess("homework", session.role);
 
     if (session.role === "STUDENT") {
       throw new Error("Students cannot create homework.");
@@ -1023,7 +1023,7 @@ export async function addHomework(formData: FormData) {
 export async function saveNewsPost(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("news", session.role);
+    await ensureAccess("news", session.role);
 
     if (session.role === "STUDENT" || session.role === "PARENT") {
       throw new Error("You do not have permission to add or edit news posts.");
@@ -1087,7 +1087,7 @@ export async function saveNewsPost(formData: FormData) {
 export async function sendNotification(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("notifications", session.role);
+    await ensureAccess("notifications", session.role);
 
     const targetRole = String(formData.get("targetRole") ?? "STUDENT") as Role;
     const title = String(formData.get("title") ?? "").trim();
@@ -1176,12 +1176,66 @@ export async function deleteUser(formData: FormData) {
   await redirectToReferrer("/settings");
 }
 
+export async function addPageAccess(formData: FormData) {
+  try {
+    const session = await requireSession();
+    if (session.role !== "FOUNDER") {
+      throw new Error("Only founder can manage page access.");
+    }
+
+    const accessValue = String(formData.get("access") ?? "");
+    const [pageIdValue, roleIdValue] = accessValue.includes("|")
+      ? accessValue.split("|")
+      : [String(formData.get("pageId") ?? ""), String(formData.get("roleId") ?? "")];
+    const pageId = Number(pageIdValue);
+    const roleId = Number(roleIdValue);
+    if (!Number.isInteger(pageId) || !Number.isInteger(roleId) || pageId <= 0 || roleId <= 0) {
+      throw new Error("Enter access as pageId|roleId, for example 10|1.");
+    }
+
+    const [page, role] = await Promise.all([
+      prisma.page.findUnique({ where: { id: pageId } }),
+      prisma.role.findUnique({ where: { id: roleId } }),
+    ]);
+    if (!page || !role) {
+      throw new Error("The page ID or role ID was not found.");
+    }
+
+    await prisma.pageAccess.create({ data: { pageId, roleId } });
+    revalidatePath("/settings");
+    await setFlashMessage("success", `Access added: ${page.label} for ${role.name}.`);
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/settings");
+}
+
+export async function removePageAccess(formData: FormData) {
+  try {
+    const session = await requireSession();
+    if (session.role !== "FOUNDER") {
+      throw new Error("Only founder can manage page access.");
+    }
+
+    const pageId = Number(formData.get("pageId") ?? 0);
+    const roleId = Number(formData.get("roleId") ?? 0);
+    await prisma.pageAccess.deleteMany({ where: { pageId, roleId } });
+    revalidatePath("/settings");
+    await setFlashMessage("success", "Page access removed.");
+  } catch (error) {
+    await setFlashMessage("error", getErrorMessage(error));
+  }
+
+  await redirectToReferrer("/settings");
+}
+
 // ── Activity Achievements ──────────────────────────────────────────────────
 
 export async function createActivityTask(formData: FormData) {
   try {
     const session = await requireSession();
-    ensureAccess("achievements", session.role);
+    await ensureAccess("achievements", session.role);
 
     if (session.role !== "TEACHER" && session.role !== "PRINCIPAL" && session.role !== "FOUNDER") {
       throw new Error("Only teachers can create tasks.");

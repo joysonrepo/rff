@@ -15,7 +15,7 @@ type EventRow = {
 
 export default async function EventsPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "events")) {
+  if (!(await canAccess(session.role, "events"))) {
     return <AccessDenied moduleName="events" />;
   }
 

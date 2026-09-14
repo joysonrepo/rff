@@ -3,6 +3,7 @@ import { AccessDenied } from "@/components/AccessDenied";
 import { ValidatedProfileImageInput } from "@/components/ValidatedProfileImageInput";
 import { updateStaff } from "@/lib/actions";
 import { requireSession } from "@/lib/auth";
+import { canAccess } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import styles from "@/app/(protected)/module.module.css";
 
@@ -44,7 +45,7 @@ function toDateInputValue(value: unknown): string {
 
 export default async function EditStaffPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSession();
-  if (!(session.role === "FOUNDER" || session.role === "HR")) {
+  if (!(await canAccess(session.role, "staffList")) || !(session.role === "FOUNDER" || session.role === "HR")) {
     return <AccessDenied moduleName="staff" />;
   }
 

@@ -41,7 +41,7 @@ function todayValue() {
 
 export default async function AttendancePage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "attendance")) {
+  if (!(await canAccess(session.role, "attendance"))) {
     return <AccessDenied moduleName="attendance" />;
   }
 

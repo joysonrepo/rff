@@ -78,7 +78,7 @@ function normalizeFee(fee: FeeRow): NormalizedFeeRow {
 
 export default async function FeesPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "fees")) {
+  if (!(await canAccess(session.role, "fees"))) {
     return <AccessDenied moduleName="fees" />;
   }
 

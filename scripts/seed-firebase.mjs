@@ -42,6 +42,41 @@ async function main() {
   const now = new Date().toISOString();
   const password = await bcrypt.hash("Welcome@123", 12);
 
+  const roles = [
+    { id: 1, name: "STUDENT", createdAt: now },
+    { id: 2, name: "PARENT", createdAt: now },
+    { id: 3, name: "TEACHER", createdAt: now },
+    { id: 4, name: "STAFF", createdAt: now },
+    { id: 5, name: "PRINCIPAL", createdAt: now },
+    { id: 6, name: "ACCOUNTS", createdAt: now },
+    { id: 7, name: "HR", createdAt: now },
+    { id: 8, name: "ADMIN_MANAGER", createdAt: now },
+    { id: 9, name: "BOARD_DIRECTOR", createdAt: now },
+    { id: 10, name: "FOUNDER", createdAt: now },
+  ];
+  const pages = [
+    [1, "dashboard", "Dashboard", "/dashboard"], [2, "students", "Students", "/students"],
+    [3, "studentList", "Student List", "/student-list"], [4, "staff", "Staff", "/staff"],
+    [5, "staffList", "Staff List", "/staff-list"], [6, "attendance", "Attendance", "/attendance"],
+    [7, "news", "Newslet", "/news"], [8, "fees", "Fees", "/fees"], [9, "reports", "Reports", "/reports"],
+    [10, "homework", "Homework", "/homework"], [11, "events", "Events", "/events"],
+    [12, "settings", "Settings", "/settings"], [13, "enrollments", "Enrollments", "/enrollments"],
+    [14, "courses", "Courses & Batches", "/courses"], [15, "notifications", "Notifications", "/notifications"],
+    [16, "marks", "Marks", "/marks"], [17, "achievements", "Achievements", "/achievements"],
+  ].map(([id, key, label, route]) => ({ id, key, label, route, createdAt: now }));
+  const accessByRole = {
+    FOUNDER: ["dashboard", "students", "studentList", "staff", "staffList", "attendance", "homework", "news", "fees", "reports", "events", "settings", "enrollments", "courses", "notifications", "marks", "achievements"],
+    BOARD_DIRECTOR: ["dashboard", "news", "reports"], ADMIN_MANAGER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "events", "enrollments", "courses", "notifications"],
+    HR: ["dashboard", "staff", "staffList", "attendance", "news", "reports"], ACCOUNTS: ["dashboard", "fees", "news", "reports", "staff", "staffList"],
+    PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "reports", "events"],
+    TEACHER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
+    STAFF: ["dashboard", "attendance", "news", "events", "notifications", "marks"], PARENT: ["dashboard", "students", "studentList", "attendance", "news", "marks", "fees", "events", "notifications"],
+    STUDENT: ["dashboard", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
+  };
+  const pageByKey = new Map(pages.map((page) => [page.key, page]));
+  const roleByName = new Map(roles.map((role) => [role.name, role]));
+  const pageAccesses = Object.entries(accessByRole).flatMap(([roleName, pageKeys], index) => pageKeys.map((key, offset) => ({ id: index * 100 + offset + 1, pageId: pageByKey.get(key).id, roleId: roleByName.get(roleName).id, createdAt: now })));
+
   const users = [
     { id: 1, name: "Founder", email: "founder@rolfunfactory.com", password, role: "FOUNDER", createdAt: now, updatedAt: now },
     { id: 2, name: "Board Director", email: "board@rolfunfactory.com", password, role: "BOARD_DIRECTOR", createdAt: now, updatedAt: now },
@@ -86,6 +121,9 @@ async function main() {
   ];
 
   await seedCollection("users", users);
+  await seedCollection("roles", roles);
+  await seedCollection("pages", pages);
+  await seedCollection("pageAccesses", pageAccesses);
   await seedCollection("parents", parents);
   await seedCollection("teachers", teachers);
   await seedCollection("students", students);
@@ -115,6 +153,7 @@ async function main() {
       fees: fees.length,
       events: events.length,
       notifications: notifications.length,
+      pageAccesses: pageAccesses.length,
     },
     { merge: true },
   );

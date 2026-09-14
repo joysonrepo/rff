@@ -27,7 +27,7 @@ type StudentOptionRow = {
 
 export default async function MarksPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "marks")) {
+  if (!(await canAccess(session.role, "marks"))) {
     return <AccessDenied moduleName="marks" />;
   }
 

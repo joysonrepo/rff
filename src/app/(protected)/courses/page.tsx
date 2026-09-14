@@ -20,7 +20,7 @@ type CourseRow = {
 
 export default async function CoursesPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "courses")) {
+  if (!(await canAccess(session.role, "courses"))) {
     return <AccessDenied moduleName="courses" />;
   }
 

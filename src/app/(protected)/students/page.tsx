@@ -42,7 +42,7 @@ function normalizeStudents(students: StudentWithParent[]): StudentWithParent[] {
 
 export default async function StudentsPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "students")) {
+  if (!(await canAccess(session.role, "students"))) {
     return <AccessDenied moduleName="students" />;
   }
 

@@ -11,7 +11,10 @@ import {
   Mark,
   News,
   Notification,
+  Page,
+  PageAccess,
   Parent,
+  RoleRecord,
   Staff,
   Student,
   Teacher,
@@ -215,6 +218,40 @@ function applySelect<T extends Record<string, unknown>>(items: T[], select?: Rec
 }
 
 const firestorePrisma = {
+  page: {
+    async findUnique(args: { where: WhereClause }) {
+      return findUniqueByField<Page>("pages", args.where);
+    },
+    async findMany(args?: { orderBy?: Record<string, SortDirection> }) {
+      return applyOrder(await listCollection<Page>("pages"), args?.orderBy);
+    },
+  },
+  role: {
+    async findUnique(args: { where: WhereClause }) {
+      return findUniqueByField<RoleRecord>("roles", args.where);
+    },
+    async findMany(args?: { orderBy?: Record<string, SortDirection> }) {
+      return applyOrder(await listCollection<RoleRecord>("roles"), args?.orderBy);
+    },
+  },
+  pageAccess: {
+    async findFirst(args: { where: WhereClause }) {
+      const rows = applyWhere(await listCollection<PageAccess>("pageAccesses"), args.where);
+      return rows[0] ?? null;
+    },
+    async findMany(args?: { where?: WhereClause; orderBy?: Record<string, SortDirection> }) {
+      return applyOrder(applyWhere(await listCollection<PageAccess>("pageAccesses"), args?.where), args?.orderBy);
+    },
+    async create(args: { data: Omit<PageAccess, "id" | "createdAt"> }) {
+      return createWithId<PageAccess>("pageAccesses", { ...args.data, createdAt: nowIso() });
+    },
+    async deleteMany(args: { where: WhereClause }) {
+      const rows = applyWhere(await listCollection<PageAccess>("pageAccesses"), args.where);
+      for (const row of rows) {
+        await deleteById("pageAccesses", row.id);
+      }
+    },
+  },
   user: {
     async findUnique(args: { where: WhereClause }) {
       return findUniqueByField<User>("users", args.where);

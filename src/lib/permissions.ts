@@ -1,4 +1,5 @@
 import { Role } from "@/lib/types";
+import { prisma } from "@/lib/prisma";
 
 export type AppModule =
   | "dashboard"
@@ -19,43 +20,21 @@ export type AppModule =
   | "marks"
   | "achievements";
 
-const allModules: AppModule[] = [
-  "dashboard",
-  "students",
-  "studentList",
-  "staff",
-  "staffList",
-  "attendance",
-  "homework",
-  "news",
-  "fees",
-  "reports",
-  "events",
-  "settings",
-  "enrollments",
-  "courses",
-  "notifications",
-  "marks",
-  "achievements",
-];
+export async function canAccess(role: Role, module: AppModule): Promise<boolean> {
+  const roleRecord = await prisma.role.findUnique({ where: { name: role } });
+  const page = await prisma.page.findUnique({ where: { key: module } });
+  if (!roleRecord || !page) return false;
 
-const permissionMap: Record<Role, AppModule[]> = {
-  FOUNDER: allModules,
-  BOARD_DIRECTOR: ["dashboard", "news", "reports"],
-  ADMIN_MANAGER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "events", "enrollments", "courses", "notifications"],
-  HR: ["dashboard", "staff", "staffList", "attendance", "news", "reports"],
-  ACCOUNTS: ["dashboard", "fees", "news", "reports", "staff", "staffList"],
-  PRINCIPAL: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "reports", "events"],
-  TEACHER: ["dashboard", "students", "studentList", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
-  STAFF: ["dashboard", "attendance", "news", "events", "notifications", "marks"],
-  PARENT: ["dashboard", "students", "studentList", "attendance", "news", "marks", "fees", "events", "notifications"],
-  STUDENT: ["dashboard", "attendance", "homework", "news", "marks", "events", "notifications", "achievements"],
-};
-
-export function canAccess(role: Role, module: AppModule): boolean {
-  return permissionMap[role].includes(module);
+  const access = await prisma.pageAccess.findFirst({ where: { roleId: roleRecord.id, pageId: page.id } });
+  return Boolean(access);
 }
 
-export function getAllowedModules(role: Role): AppModule[] {
-  return permissionMap[role];
+export async function getAllowedModules(role: Role): Promise<AppModule[]> {
+  const roleRecord = await prisma.role.findUnique({ where: { name: role } });
+  if (!roleRecord) return [];
+
+  const accesses = await prisma.pageAccess.findMany({ where: { roleId: roleRecord.id } });
+  const accessIds = new Set(accesses.map((access) => access.pageId));
+  const pages = await prisma.page.findMany({ orderBy: { id: "asc" } });
+  return pages.filter((page) => accessIds.has(page.id)).map((page) => page.key as AppModule);
 }

@@ -25,7 +25,7 @@ type HomeworkPageProps = {
 
 export default async function HomeworkPage({ searchParams }: HomeworkPageProps) {
   const session = await requireSession();
-  if (!canAccess(session.role, "homework")) {
+  if (!(await canAccess(session.role, "homework"))) {
     return <AccessDenied moduleName="homework" />;
   }
 

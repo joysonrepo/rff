@@ -32,7 +32,7 @@ type EnrollmentRow = {
 
 export default async function EnrollmentsPage() {
   const session = await requireSession();
-  if (!canAccess(session.role, "enrollments")) {
+  if (!(await canAccess(session.role, "enrollments"))) {
     return <AccessDenied moduleName="enrollments" />;
   }
 
